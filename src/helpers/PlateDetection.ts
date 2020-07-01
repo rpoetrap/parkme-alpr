@@ -143,7 +143,7 @@ export default class PlateDetection {
     const sharpened = await warped.filter2DAsync(-1, kernel);
 
     const binaryWarped = await this.convertToBinary(sharpened, false);
-    const filteredContours = await this.getContours(sharpened, false);
+    const filteredContours = await this.getContours(warped, false);
 
     const regions: Mat[] = [];
     for (const contour of filteredContours) {
