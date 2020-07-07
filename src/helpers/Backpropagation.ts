@@ -9,6 +9,9 @@ import {
   multiply,
   exp,
   map,
+  mean,
+  abs,
+  pow,
   transpose
 } from 'mathjs';
 
@@ -21,6 +24,12 @@ export default class Backpropagation {
   private weights: Matrix[] = [];
   private bias: Matrix[] = [];
 
+  /**
+   * Initialize backpropagation neural network
+   * @param inputNode Number of input neuron
+   * @param hiddenNodes Array of hidden layers neuron number
+   * @param outputs Outputs
+   */
   constructor(inputNode: number, hiddenNodes: number[], outputs: string[]) {
     this.outputs = outputs;
     for (const [idx, nodes] of hiddenNodes.entries()) {
@@ -39,12 +48,20 @@ export default class Backpropagation {
     this.bias.push(outputBias);
   }
 
+  /**
+   * Activation function
+   * @param x Number
+   * @param derivative Toggle to derivative
+   */
   activation(x: number, derivative = false) {
-    if (derivative) return x * (1 - x);
-    return 1 / (1 + exp(-x));
+    return derivative ? x * (1 - x) : 1 / (1 + exp(-x));
   }
 
-  train(inputArray: number[], targetArray: string) {
+  /**
+   * Calculate output layer and hidden layer
+   * @param inputArray Input data
+   */
+  feedforward(inputArray: number[]) {
     const input = matrix(inputArray).resize([inputArray.length, 1]);
     const hiddens: Matrix[] = [];
     let output = matrix();
@@ -59,33 +76,68 @@ export default class Backpropagation {
       if (idx != findLastIndex(this.weights)) hiddens.push(output)
     }
 
+    return { input, hiddens, output };
+  }
+
+  /**
+   * Train to adjust weight
+   * @param inputArray Input data
+   * @param targetArray Target
+   * @param learningRate Learning rate
+   */
+  train(inputArray: number[], targetArray: string, learningRate: number) {
+    const { input, hiddens, output } = this.feedforward(inputArray);
+
     const targets = matrix(this.outputs.map(output => output === targetArray ? [1] : [0]));
     const outputErrors = subtract(targets, output) as Matrix;
     let hiddenErrors: Matrix[] = [];
+    let corrections: Matrix[] = [];
+    let newBias: Matrix[] = [];
+    let newWeight: Matrix[] = [];
 
-    for (let i = findLastIndex(this.weights); i > 0; i--) {
-      const previousError = i == findLastIndex(this.weights) ? outputErrors : head(hiddenErrors)!;
-      const transposedWeight = transpose(this.weights[i]);
+    for (let i = findLastIndex(this.weights); i >= 0; i--) {
+      const currentOutput = (i == findLastIndex(this.weights)) ? output : hiddens[i];
+      const previousError = (i == findLastIndex(this.weights)) ? outputErrors : multiply(transpose(this.weights[i + 1]), head(corrections)!);
 
-      const error = multiply(transposedWeight, previousError);
-      hiddenErrors = [error, ...hiddenErrors];
+      if (i != findLastIndex(this.weights)) hiddenErrors = [previousError, ...hiddenErrors];
+
+      const errorCorrection = map(previousError, (_, index) => {
+        const [row, col] = index;
+        const error = previousError.toArray() as number[][];
+        const output = currentOutput.toArray() as number[][];
+
+        return error[row][col] * this.activation(output[row][col]);
+      });
+      corrections = [errorCorrection, ...corrections];
+
+      const oldBias = this.bias[i];
+      const bias = add(oldBias, multiply(learningRate, errorCorrection)) as Matrix;
+      newBias = [bias, ...newBias];
+
+      const previousLayer = (i == 0) ? input : hiddens[i - 1];
+      const oldWeight = this.weights[i];
+      const weight = add(oldWeight, multiply(multiply(learningRate, errorCorrection), transpose(previousLayer))) as Matrix;
+      newWeight = [weight, ...newWeight];
     }
 
-    // PRINT TABLE
-    console.log(table([['INPUT LAYER'], ...input.toArray() as any], tableConfig));
-    for (const [id, hidden] of hiddens.entries()) {
-      console.log(table([
-        ['HIDDEN LAYER', 'ERROR'],
-        ...(hidden.toArray() as any[]).map((item, idx) => {
-          return [...item, ...(hiddenErrors[id].toArray() as any[])[idx]];
-        })
-      ], tableConfig));
-    }
-    console.log(table([
-      ['OUTPUT LAYER', 'ERROR'],
-      ...(output.toArray() as any[]).map((item, idx) => {
-        return [...item, ...(outputErrors.toArray() as any[])[idx]];
-      })
-    ], tableConfig));
+    const MSE = pow(mean(abs(outputErrors)),2 );
+    return MSE;
+
+    // // PRINT TABLE
+    // console.log(table([['INPUT LAYER'], ...input.toArray() as any], tableConfig));
+    // for (const [id, hidden] of hiddens.entries()) {
+    //   console.log(table([
+    //     ['HIDDEN LAYER', 'ERROR'],
+    //     ...(hidden.toArray() as any[]).map((item, idx) => {
+    //       return [...item, ...(hiddenErrors[id].toArray() as any[])[idx]];
+    //     })
+    //   ], tableConfig));
+    // }
+    // console.log(table([
+    //   ['OUTPUT LAYER', 'ERROR'],
+    //   ...(output.toArray() as any[]).map((item, idx) => {
+    //     return [...item, ...(outputErrors.toArray() as any[])[idx]];
+    //   })
+    // ], tableConfig));
   }
 }
