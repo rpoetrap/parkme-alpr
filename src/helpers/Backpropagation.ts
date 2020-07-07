@@ -120,7 +120,10 @@ export default class Backpropagation {
       newWeight = [weight, ...newWeight];
     }
 
-    const MSE = pow(mean(abs(outputErrors)),2 );
+    this.bias = newBias;
+    this.weights = newWeight;
+
+    const MSE = pow(mean(abs(outputErrors)), 2) as number;
     return MSE;
 
     // // PRINT TABLE
