@@ -123,8 +123,8 @@ export default class Backpropagation {
     this.bias = newBias;
     this.weights = newWeight;
 
-    const MSE = pow(mean(abs(outputErrors)), 2) as number;
-    return MSE;
+    const averageError = mean(abs(outputErrors)) as number;
+    return averageError;
 
     // // PRINT TABLE
     // console.log(table([['INPUT LAYER'], ...input.toArray() as any], tableConfig));
