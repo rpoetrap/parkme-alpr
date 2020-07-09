@@ -1,9 +1,5 @@
 import path from 'path';
-import {
-  minBy,
-  maxBy,
-  mean
-} from 'lodash';
+import { minBy, maxBy, mean } from 'lodash';
 import cv, {
   Mat,
   Rect,
@@ -16,10 +12,12 @@ import cv, {
   Size,
   Contour,
   Vec3,
-  CV_8S
+  CV_8S,
+  CV_8U
 } from 'opencv4nodejs';
 
 import { darknet } from '../configs/darknet';
+import { max, divide, multiply, round } from 'mathjs';
 
 /**
  * Contain Automatic License Plate Recognition process
@@ -44,7 +42,7 @@ export default class PlateDetection {
   /**
    * License Plate Localization
    */
-  async localization() {
+  private async localization() {
     const detectedPlates = darknet.detect(path.resolve(this.imagePath));
     const rgbImage = await cv.imreadAsync(this.imagePath); // Load Image
 
@@ -65,7 +63,7 @@ export default class PlateDetection {
    * @param image OpenCV image matrix
    * @param blur Apply blur filter
    */
-  async convertToBinary(image: Mat, blur = true) {
+  private async convertToBinary(image: Mat, blur = true) {
     const hsvImage = (await image.cvtColorAsync(COLOR_BGR2HSV)).splitChannels();
     const grayImage = hsvImage[2];
     const blurImage = blur ? await grayImage.bilateralFilterAsync(11, 17, 17) : grayImage;
@@ -78,7 +76,7 @@ export default class PlateDetection {
    * @param image OpenCV image matrix
    * @param filter Filter contour ratio and height
    */
-  async getContours(image: Mat, filter = true) {
+  private async getContours(image: Mat, filter = true) {
     const binary = await this.convertToBinary(image);
 
     const contours = await binary.copy().findContoursAsync(RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
@@ -98,7 +96,7 @@ export default class PlateDetection {
    * Calculates a perspective transform
    * @param image OpenCV image matrix
    */
-  async perspectiveTransform(image: Mat) {
+  private async perspectiveTransform(image: Mat) {
     const resultImage = await image.copyAsync();
     const filteredContours = await this.getContours(resultImage);
     const first = minBy(filteredContours, contour => contour.boundingRect().x)!.boundingRect();
@@ -135,7 +133,7 @@ export default class PlateDetection {
   /**
    * Character Segmentation
    */
-  async segmentation() {
+  private async segmentation() {
     const resultImage = this.foundPlate[0];
     const warped = await this.perspectiveTransform(resultImage);
 
@@ -152,6 +150,40 @@ export default class PlateDetection {
       // Draw bounding box
       sharpened.drawRectangle(new Point2(x, y), new Point2(x + width, y + height), new Vec3(0, 0, 255), 1);
     }
-    await cv.imwriteAsync('./tmp/result2.jpg', regions[0]);
+    
+    const filledImage = await this.resizeImage(regions[2]);
+    await cv.imwriteAsync('./tmp/result2.jpg', filledImage);
+  }
+
+  /**
+   * Resize segmented character to square image
+   * @param image Character image based on OpenCV Mat
+   */
+  private async resizeImage(image: Mat) {
+    let rows: number;
+    let cols: number;
+    const targetSize = 28;
+    const padding = 6;
+
+    const dims = image.sizes;
+    [rows, cols] = multiply(divide(dims, max(dims)), (targetSize - padding)) as number[];
+    const resizedImage = await image.copy().resizeAsync(round(rows), round(cols));
+    [rows, cols] = resizedImage.sizes;
+
+    let filledImage = new Mat(targetSize, targetSize, CV_8U, 0);
+    const canvas = filledImage.getDataAsArray();
+    const currentImage = resizedImage.getDataAsArray();
+
+    const startRow = round(14 - (rows / 2));
+    const startCol = round(14 - (cols / 2));
+    
+    for (let row = startRow; row < (startRow + rows); row++) {
+      for (let col = startCol; col < (startCol + cols); col++) {
+        canvas[row][col] = currentImage[row - startRow][col - startCol];
+      }
+    }
+    filledImage = new Mat(canvas, CV_8U);
+
+    return filledImage;
   }
 }
