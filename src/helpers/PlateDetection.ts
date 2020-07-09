@@ -34,9 +34,13 @@ export default class PlateDetection {
     this.imagePath = path.resolve(imagePath);
   }
 
+  /**
+   * Detect license plate and return segmented characters with OpenCV Mat format
+   */
   async detect() {
     await this.localization();
-    await this.segmentation();
+    const result = await this.segmentation();
+    return result;
   }
 
   /**
@@ -150,9 +154,12 @@ export default class PlateDetection {
       // Draw bounding box
       sharpened.drawRectangle(new Point2(x, y), new Point2(x + width, y + height), new Vec3(0, 0, 255), 1);
     }
-    
-    const filledImage = await this.resizeImage(regions[2]);
-    await cv.imwriteAsync('./tmp/result2.jpg', filledImage);
+
+    return regions;
+    // for (const [idx, detected] of regions.entries()) {
+    //   const filledImage = await this.resizeImage(detected);
+    //   await cv.imwriteAsync(`./tmp/char-${idx}.jpg`, filledImage);
+    // }
   }
 
   /**
