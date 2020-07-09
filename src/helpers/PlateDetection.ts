@@ -50,7 +50,7 @@ export default class PlateDetection {
     const detectedPlates = darknet.detect(path.resolve(this.imagePath));
     const rgbImage = await cv.imreadAsync(this.imagePath); // Load Image
 
-    for (const plate of detectedPlates) {
+    for (let plate of detectedPlates) {
       let { box: { x, y, h: height, w: width } } = plate;
       x = x - (width / 2);
       y = y - (height / 2);
@@ -148,15 +148,19 @@ export default class PlateDetection {
     const filteredContours = await this.getContours(warped, false);
 
     const regions: Mat[] = [];
-    for (const contour of filteredContours) {
+    for (let contour of filteredContours) {
       const { width, height, x, y } = contour.boundingRect();
       regions.push(binaryWarped.getRegion(contour.boundingRect()));
       // Draw bounding box
       sharpened.drawRectangle(new Point2(x, y), new Point2(x + width, y + height), new Vec3(0, 0, 255), 1);
     }
 
-    return regions;
-    // for (const [idx, detected] of regions.entries()) {
+    const resizedRegion: Mat[] = []
+    for (let region of regions) {
+      resizedRegion.push(await this.resizeImage(region));
+    }
+    return resizedRegion;
+    // for (let [idx, detected] of regions.entries()) {
     //   const filledImage = await this.resizeImage(detected);
     //   await cv.imwriteAsync(`./tmp/char-${idx}.jpg`, filledImage);
     // }
