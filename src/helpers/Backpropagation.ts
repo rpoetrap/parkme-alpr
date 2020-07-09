@@ -1,3 +1,5 @@
+import path from 'path';
+import fs from 'fs';
 import { last, head, findLastIndex } from 'lodash';
 import { table, getBorderCharacters, TableUserConfig } from 'table';
 import {
@@ -23,6 +25,8 @@ export default class Backpropagation {
   private outputs: string[];
   private weights: Matrix[] = [];
   private bias: Matrix[] = [];
+  private fileName = 'savedState';
+  private filePath = path.join(__dirname, '../configs');
 
   /**
    * Initialize backpropagation neural network
@@ -53,7 +57,7 @@ export default class Backpropagation {
    * @param x Number
    * @param derivative Toggle to derivative
    */
-  activation(x: number, derivative = false) {
+  private activation(x: number, derivative = false) {
     return derivative ? x * (1 - x) : 1 / (1 + exp(-x));
   }
 
@@ -142,5 +146,33 @@ export default class Backpropagation {
     //     return [...item, ...(outputErrors.toArray() as any[])[idx]];
     //   })
     // ], tableConfig));
+  }
+
+  /**
+   * Save weight and bias
+   */
+  save() {
+    fs.writeFileSync(path.join(this.filePath, this.fileName), JSON.stringify({
+      weights: this.weights.map(item => item.toArray()),
+      bias: this.bias.map(item => item.toArray()),
+      outputs: this.outputs
+    }));
+    
+    console.log('State saved');
+  }
+  
+  /**
+   * Load saved weight and bias
+   */
+  load() {
+    let data = JSON.parse(fs.readFileSync(path.join(this.filePath, this.fileName), 'utf-8'));
+    data.weights = data.weights.map((item: any) => matrix(item));
+    data.bias = data.bias.map((item: any) => matrix(item));
+    
+    this.weights = data.weights;
+    this.bias = data.bias;
+    this.outputs = data.outputs;
+    
+    console.log('Data loaded');
   }
 }
