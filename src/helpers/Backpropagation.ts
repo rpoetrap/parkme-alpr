@@ -110,7 +110,7 @@ export default class Backpropagation {
         const error = previousError.toArray() as number[][];
         const output = currentOutput.toArray() as number[][];
 
-        return error[row][col] * this.activation(output[row][col]);
+        return error[row][col] * this.activation(output[row][col], true);
       });
       corrections = [errorCorrection, ...corrections];
 
