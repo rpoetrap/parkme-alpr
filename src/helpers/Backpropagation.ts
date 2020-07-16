@@ -127,7 +127,10 @@ export default class Backpropagation {
     this.bias = newBias;
     this.weights = newWeight;
 
-    const averageError = mean(abs(outputErrors)) as number;
+    const squared = (abs(outputErrors).toArray() as number[][]).map(item => {
+      return item.map(item => pow(item, 2))
+    });
+    const averageError = mean(matrix(squared as number[][])) as number;
     return averageError;
 
     // // PRINT TABLE
@@ -157,10 +160,10 @@ export default class Backpropagation {
       bias: this.bias.map(item => item.toArray()),
       outputs: this.outputs
     }));
-    
+
     console.log('State saved');
   }
-  
+
   /**
    * Load saved weight and bias
    */
@@ -168,11 +171,11 @@ export default class Backpropagation {
     let data = JSON.parse(fs.readFileSync(path.join(this.filePath, this.fileName), 'utf-8'));
     data.weights = data.weights.map((item: any) => matrix(item));
     data.bias = data.bias.map((item: any) => matrix(item));
-    
+
     this.weights = data.weights;
     this.bias = data.bias;
     this.outputs = data.outputs;
-    
+
     console.log('Data loaded');
   }
 }
