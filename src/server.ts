@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import expressSession from 'express-session';
@@ -8,6 +8,8 @@ import passport from 'passport';
 import dotenv from 'dotenv';
 import Knex from 'knex';
 dotenv.config({ path: '.env' });
+
+import apiRoutes from './routes/api';
 
 // Session config
 export const knex = Knex({
@@ -33,6 +35,11 @@ try {
   app.use(expressSession({ secret: process.env.SESSION_SECRET, resave: true, saveUninitialized: true, store }));
   app.use(passport.initialize());
   app.use(passport.session());
+
+  app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+    res.locals.apiVersion = '1.0';
+    next();
+  }, apiRoutes);
 
   app.use('*', (req: Request, res: Response): any => {
     return res.status(404).json({
