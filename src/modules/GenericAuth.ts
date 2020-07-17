@@ -139,8 +139,6 @@ class GenericHandler {
           })
         }
 
-
-        console.log('username: ', username);
         const foundAuth = await Auth.query().findOne({ username }).join('users', Auth.ref('user_id'), User.ref('id')).where({ is_admin: true });
         const isPasswordMatch = foundAuth ? await foundAuth.comparePassword(password) : false;
         if (!isPasswordMatch) {
