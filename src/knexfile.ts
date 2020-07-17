@@ -11,31 +11,31 @@ const connection = {
 module.exports = {
 
   development: {
-    client: "mysql",
+    client: process.env.DB_TYPE,
     connection
   },
 
   staging: {
-    client: "mysql",
+    client: process.env.DB_TYPE,
     connection,
     pool: {
       min: 2,
       max: 10
     },
     migrations: {
-      tableName: "knex_migrations"
+      tableName: 'knex_migrations'
     }
   },
 
   production: {
-    client: "mysql",
+    client: process.env.DB_TYPE,
     connection,
     pool: {
       min: 2,
       max: 10
     },
     migrations: {
-      tableName: "knex_migrations"
+      tableName: 'knex_migrations'
     }
   }
 
