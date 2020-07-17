@@ -52,7 +52,7 @@ class GenericHandler {
           locationType: 'body'
         });
 
-        const existingUser = await Auth.query().findOne({ user_id: foundUser.id }).select('id');
+        const existingUser = foundUser ? await Auth.query().findOne({ user_id: foundUser.id }).select('id') : false;
         errorAppender(errors, !isEmpty(existingUser), {
           message: 'This user identifier already registered, please login instead',
           location: 'user_identifier',
@@ -104,12 +104,12 @@ class GenericHandler {
           }
         });
       } catch (e) {
-        console.error(`Error when trying to login. ${e.message}`);
+        console.error(`Error when trying to register. ${e.message}`);
         return res.status(500).json({
           apiVersion,
           error: {
             code: 500,
-            message: `Could not login`
+            message: `Could not register`
           }
         });
       }
@@ -187,6 +187,28 @@ class GenericHandler {
         });
       }
     }
+  }
+
+  postLogout() {
+    return (async (req: Request, res: Response) => {
+      const apiVersion = res.locals.apiVersion;
+      try {
+        res.clearCookie(process.env.ACCESS_TOKEN_NAME);
+        return res.json({
+          apiVersion,
+          message: 'Successfully logged out'
+        });
+      } catch (e) {
+        console.error(`Could not log out the user: ${e.message}`);
+        return res.status(500).json({
+          apiVersion,
+          error: {
+            code: 500,
+            message: 'Could not log out from current user.'
+          }
+        });
+      }
+    });
   }
 }
 
