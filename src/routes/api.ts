@@ -15,7 +15,7 @@ r.get('/auth/check', authHandler.middlewareAuthCheck(), (req: Request, res: Resp
 r.get('/auth/nonauth', authHandler.middlewareNonAuthCheck(), (req: Request, res: Response) => {
 	return res.json({
 		apiVersion: res.locals.apiVersion,
-		message: 'You are not uthenticated'
+		message: 'You are not authenticated'
 	});
 });
 r.post('/auth/register', authHandler.postRegister());
