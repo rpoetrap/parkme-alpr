@@ -2,6 +2,10 @@ import express, { Request, Response } from 'express';
 import authHandler from '../handlers/auth';
 
 const r = express.Router();
+
+/**
+ * Auth
+ */
 r.get('/auth/check', authHandler.middlewareAuthCheck(), (req: Request, res: Response) => {
 	return res.json({
 		apiVersion: res.locals.apiVersion,
