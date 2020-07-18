@@ -243,7 +243,7 @@ class GenericHandler {
 					});
 				}
 			}
-		]
+		];
 	}
 
 	middlewareNonAuthCheck() {
