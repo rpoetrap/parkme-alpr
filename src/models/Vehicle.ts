@@ -7,7 +7,7 @@ class Vehicle extends Model {
   updated_at: string;
 
   static get tableName() {
-    return 'vehicles';
+  	return 'vehicles';
   }
 }
 

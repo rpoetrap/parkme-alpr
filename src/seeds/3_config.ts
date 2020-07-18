@@ -12,4 +12,4 @@ export async function seed(knex: Knex): Promise<void> {
 	];
 
 	await knex('configs').insert(data);
-};
+}

@@ -8,7 +8,7 @@ class Role extends Model {
   updated_at: string;
 
   static get tableName() {
-    return 'roles';
+  	return 'roles';
   }
 }
 

@@ -12,7 +12,7 @@ class Smartcard extends Model {
   updated_by: number;
 
   static get tableName() {
-    return 'smartcards';
+  	return 'smartcards';
   }
 }
 

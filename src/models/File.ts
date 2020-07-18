@@ -12,7 +12,7 @@ class File extends Model {
   updated_at: string;
 
   static get tableName() {
-    return 'files';
+  	return 'files';
   }
 }
 

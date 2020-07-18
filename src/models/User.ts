@@ -11,7 +11,7 @@ class User extends Model {
   updated_at: string;
 
   static get tableName() {
-    return 'users';
+  	return 'users';
   }
 }
 

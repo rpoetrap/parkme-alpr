@@ -9,7 +9,7 @@ class Gate extends Model {
   updated_at: string;
 
   static get tableName() {
-    return 'gates';
+  	return 'gates';
   }
 }
 

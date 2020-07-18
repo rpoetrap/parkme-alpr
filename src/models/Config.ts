@@ -8,7 +8,7 @@ class Config extends Model {
   updated_at: string;
 
   static get tableName() {
-    return 'configs';
+  	return 'configs';
   }
 }
 

@@ -10,7 +10,7 @@ class History extends Model {
   created_by: any;
 
   static get tableName() {
-    return 'histories';
+  	return 'histories';
   }
 }
 
