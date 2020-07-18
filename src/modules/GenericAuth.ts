@@ -1,8 +1,9 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { OutgoingMessage } from 'http';
-import { isEmpty } from 'lodash';
+import { isEmpty, isNil } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
+import passport from 'passport';
 
 import User from '../models/User';
 import Config from '../models/Config';
@@ -209,6 +210,40 @@ class GenericHandler {
 				});
 			}
 		});
+	}
+
+	middlewareAuthCheck() {
+		return [
+			(req: Request, res: Response, next: NextFunction) => {
+				const apiVersion = res.locals.apiVersion;
+				try {
+					passport.authenticate('jwt', { session: false }, (error, user) => {
+						if (error) throw error;
+
+						if (!user) {
+							return res.status(401).json({
+								apiVersion,
+								error: {
+									code: 401,
+									message: 'Unauthorized user request',
+									expiredToken: true
+								}
+							});
+						}
+						return next();
+					})(req, res, next);
+				} catch (e) {
+					console.error(`Could not pass check authentication middleware: ${e.message}`);
+					return res.status(500).json({
+						apiVersion,
+						error: {
+							code: 500,
+							message: 'Could not check your authentication, please try again'
+						}
+					});
+				}
+			}
+		]
 	}
 }
 

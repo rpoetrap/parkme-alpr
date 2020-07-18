@@ -7,7 +7,9 @@ import connectSessionKnex from 'connect-session-knex';
 import passport from 'passport';
 import dotenv from 'dotenv';
 import Knex from 'knex';
+
 dotenv.config({ path: '.env' });
+import './configs/passport';
 
 import apiRoutes from './routes/api';
 
