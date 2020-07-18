@@ -20,7 +20,15 @@ export const knex = Knex({
 		host: process.env.DATABASE_HOST,
 		database: process.env.MYSQL_DATABASE,
 		user: process.env.MYSQL_USER,
-		password: process.env.MYSQL_PASSWORD
+		password: process.env.MYSQL_PASSWORD,
+		typeCast(field: any, next: any) {
+			// Convert 1 to true, 0 to false, and leave null alone
+			if (field.type === 'TINY' && field.length === 1) {
+				const value = field.string();
+				return value ? value === '1' : null;
+			}
+			return next();
+		}
 	}
 });
 Model.knex(knex);
