@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { OutgoingMessage } from 'http';
-import { isEmpty, isNil } from 'lodash';
+import { isEmpty } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
@@ -244,6 +244,34 @@ class GenericHandler {
 				}
 			}
 		]
+	}
+
+	middlewareNonAuthCheck() {
+		return ((req: Request, res: Response, next: NextFunction) => {
+			const apiVersion = res.locals.apiVersion;
+			try {
+				const accessToken = req.signedCookies[process.env.ACCESS_TOKEN_NAME];
+				if (accessToken) {
+					return res.status(401).json({
+						apiVersion,
+						error: {
+							code: 401,
+							message: 'You are already authenticated'
+						}
+					});
+				}
+				return next();
+			} catch (e) {
+				console.error(`Could not pass check non-authentication middleware: ${e.message}`);
+				return res.status(500).json({
+					apiVersion,
+					error: {
+						code: 500,
+						message: 'Could not check your authentication, please try again'
+					}
+				});
+			}
+		});
 	}
 }
 
