@@ -219,6 +219,7 @@ class GenericHandler {
 				try {
 					passport.authenticate('jwt', { session: false }, (error, user) => {
 						if (error) throw error;
+						const accessToken = req.signedCookies[process.env.ACCESS_TOKEN_NAME];
 
 						if (!user) {
 							return res.status(401).json({
@@ -226,7 +227,7 @@ class GenericHandler {
 								error: {
 									code: 401,
 									message: 'Unauthorized user request',
-									expiredToken: true
+									expiredToken: accessToken ? true : false
 								}
 							});
 						}
