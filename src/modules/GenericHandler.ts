@@ -1,7 +1,10 @@
 import { Request, Response } from 'express';
 import { Model, ColumnRefOrOrderByDescriptor, ReferenceBuilder } from 'objection';
+import { pick, isEmpty } from 'lodash';
+import moment from 'moment';
+import bind from 'bind-decorator';
 
-import { stringToInteger, splitOperator } from '../helpers/string';
+import { stringToInteger, splitOperator, ErrorInterface, errorAppender } from '../helpers/string';
 
 interface GenericConfig {
 	filterByUser?: boolean;
@@ -14,6 +17,7 @@ interface FetchingConfig extends GenericConfig {
 
 interface MutatingConfig extends GenericConfig {
 	mutableAttributes?: string[];
+	uniqueAttributes?: string[];
 	requiredAttributes?: string[];
 }
 
@@ -25,12 +29,16 @@ interface HandlerConfig {
 	deleteData: FetchingConfig
 }
 
-class GenericHandler {
-	private model: typeof Model;
+class GenericModel extends Model {
+	id: number | string;
+};
+
+class GenericHandler<M extends typeof GenericModel> {
+	private model: M;
 	private idParam: string;
 	private config: HandlerConfig;
 
-	constructor(config: HandlerConfig, model: typeof Model, idParam: string) {
+	constructor(config: HandlerConfig, model: M, idParam: string) {
 		this.config = config;
 		this.model = model;
 		this.idParam = idParam;
@@ -42,8 +50,8 @@ class GenericHandler {
 			try {
 				const config = overrideConfig ? overrideConfig : this.config.getList;
 				const shownAttributes = config.shownAttributes || [];
-				const populateAttributes = config.populateAttributes || [];
 				const filterByUser = config.filterByUser || false;
+				const populateAttributes = config.populateAttributes || [];
 
 				const columnInfo = Object.keys(await this.model.query().columnInfo());
 				const userData: any = req.user;
@@ -143,6 +151,396 @@ class GenericHandler {
 			}
 		});
 	}
+
+	getSingle(overrideConfig?: FetchingConfig) {
+		return (async (req: Request, res: Response) => {
+			const apiVersion = res.locals.apiVersion;
+			try {
+				const config = overrideConfig ? overrideConfig : this.config.getSingle;
+				const shownAttributes = config.shownAttributes || [];
+				const filterByUser = config.filterByUser || false;
+				const populateAttributes = config.populateAttributes || [];
+
+				const columnInfo = Object.keys(await this.model.query().columnInfo());
+				const id = req.params[this.idParam];
+				const userData: any = req.user;
+
+				let query = this.model.query().findById(id);
+
+				/**
+				 * Check existing resource
+				 */
+				let existingQuery = this.model.query().findById(id);
+				if (filterByUser) {
+					if (columnInfo.includes('created_by')) {
+						existingQuery = existingQuery.where({ created_by: userData.id });
+					} else if (columnInfo.includes['created_by']) {
+						query = query.where({ created_by: userData.id });
+					}
+				}
+				const existingResource = await existingQuery.select('id');
+				if (!existingResource) {
+					return res.status(404).json({
+						apiVersion,
+						error: {
+							code: 404,
+							message: `Could not find the associated resource for ${this.model.tableName}`
+						}
+					});
+				}
+
+				/**
+				 * Populating attribute
+				 */
+				if (populateAttributes.length) {
+					query = query.withGraphJoined(`[${populateAttributes.join(', ')}]`);
+				}
+
+				/**
+				 * Selecting specific attribute
+				 */
+				if (shownAttributes.length) {
+					query = query.select(shownAttributes);
+				}
+
+				const result = await query;
+
+				return res.status(200).json({
+					apiVersion,
+					data: {
+						kind: this.model.tableName,
+						...result
+					}
+				});
+			} catch (e) {
+				console.error(`Error occured when trying to fetch ${this.model.tableName} detail: ${e.message}`);
+				return res.status(500).json({
+					apiVersion,
+					error: {
+						code: 500,
+						message: `Could not fetch ${this.model.tableName} detail`
+					}
+				});
+			}
+		});
+	}
+
+	postData(overrideConfig?: MutatingConfig) {
+		return (async (req: Request, res: Response) => {
+			const apiVersion = res.locals.apiVersion;
+			try {
+				const config = overrideConfig ? overrideConfig : this.config.postData;
+				const shownAttributes = config.shownAttributes || [];
+				const requiredAttributes = config.requiredAttributes || [];
+				const mutableAttributes = config.mutableAttributes || [];
+				const uniqueAttributes = config.uniqueAttributes || [];
+
+				const columnInfo = Object.keys(await this.model.query().columnInfo());
+				const userData: any = req.user;
+
+				/**
+				 * Filter post data field by mutableAttributes and columnInfo
+				 */
+				const postData = mutableAttributes.length ?
+					pick(req.body, columnInfo.filter(item => mutableAttributes.includes(item))) :
+					pick(req.body, columnInfo);
+
+				/**
+				 * Check required attributes
+				 */
+				const requiredErrors: ErrorInterface[] = [];
+				if (requiredAttributes.length) {
+					for (const attribute of requiredAttributes) {
+						errorAppender(requiredErrors, isEmpty(postData[attribute]), { location: attribute });
+					}
+				}
+				if (requiredErrors.length) {
+					return res.status(400).json({
+						apiVersion,
+						error: {
+							code: 400,
+							message: 'Error during input validation.',
+							errors: requiredErrors,
+						}
+					});
+				}
+
+				/**
+				 * Input validation
+				 */
+				const customErrors: ErrorInterface[] = [];
+				this.middlewareValidation(postData, req, customErrors);
+				if (customErrors.length) {
+					return res.status(400).json({
+						apiVersion,
+						error: {
+							code: 400,
+							message: 'Error during input validation.',
+							errors: customErrors,
+						}
+					});
+				}
+
+				/**
+				 * Check unique attributes
+				 */
+				const uniqueErrors: ErrorInterface[] = [];
+				const uniqueQuery = this.model.query().select(['id']);
+				for (const attribute of uniqueAttributes.filter(item => Object.keys(postData).includes(item))) {
+					const existedData = await uniqueQuery.where(attribute, postData[attribute]);
+					errorAppender(uniqueErrors, existedData.length > 0, { location: attribute, message: `Input ${attribute} is already existed` });
+				}
+				if (uniqueErrors.length) {
+					return res.status(400).json({
+						apiVersion,
+						error: {
+							code: 400,
+							message: 'Error during input validation.',
+							errors: uniqueErrors,
+						}
+					});
+				}
+
+				/**
+				 * Send additional data
+				 */
+				let input = postData;
+				if (columnInfo.includes('created_by')) input = {
+					...input,
+					created_by: userData.id
+				}
+
+				const result = await this.model.query().insert(input);
+				let query = this.model.query().findById(result.id);
+				if (shownAttributes.length) query = query.select(shownAttributes);
+				const createdResource = await query;
+
+				return res.status(200).json({
+					apiVersion,
+					data: {
+						kind: this.model.tableName,
+						...createdResource
+					}
+				});
+			} catch (e) {
+				console.error(`Error occured when trying to insert data to ${this.model.tableName}: ${e.message}`);
+				return res.status(500).json({
+					apiVersion,
+					error: {
+						code: 500,
+						message: `Could not insert data to ${this.model.tableName}`
+					}
+				});
+			}
+		});
+	}
+
+	patchData(overrideConfig?: MutatingConfig) {
+		return (async (req: Request, res: Response) => {
+			const apiVersion = res.locals.apiVersion;
+			try {
+				const config = overrideConfig ? overrideConfig : this.config.patchData;
+				const shownAttributes = config.shownAttributes || [];
+				const requiredAttributes = config.requiredAttributes || [];
+				const mutableAttributes = config.mutableAttributes || [];
+				const uniqueAttributes = config.uniqueAttributes || [];
+				const filterByUser = config.filterByUser || false;
+
+				const columnInfo = Object.keys(await this.model.query().columnInfo());
+				const id = req.params[this.idParam];
+				const userData: any = req.user;
+
+				/**
+				 * Filter post data field by mutableAttributes and columnInfo
+				 */
+				const postData = mutableAttributes.length ?
+					pick(req.body, columnInfo.filter(item => mutableAttributes.includes(item))) :
+					pick(req.body, columnInfo);
+
+				/**
+				 * Check required attributes
+				 */
+				const requiredErrors: ErrorInterface[] = [];
+				if (requiredAttributes.length) {
+					for (const attribute of requiredAttributes) {
+						errorAppender(requiredErrors, isEmpty(postData[attribute]), { location: attribute });
+					}
+				}
+				if (requiredErrors.length) {
+					return res.status(400).json({
+						apiVersion,
+						error: {
+							code: 400,
+							message: 'Error during input validation.',
+							errors: requiredErrors,
+						}
+					});
+				}
+
+				/**
+				 * Input validation
+				 */
+				const customErrors: ErrorInterface[] = [];
+				this.middlewareValidation(postData, req, customErrors);
+				if (customErrors.length) {
+					return res.status(400).json({
+						apiVersion,
+						error: {
+							code: 400,
+							message: 'Error during input validation.',
+							errors: customErrors,
+						}
+					});
+				}
+
+				/**
+				 * Check existing resource
+				 */
+				let existingQuery = this.model.query().findById(id);
+				if (filterByUser && columnInfo.includes('created_by')) {
+					existingQuery = existingQuery.where({ created_by: userData.id });
+				}
+				const existingResource = await existingQuery.select('id');
+				if (!existingResource) {
+					return res.status(404).json({
+						apiVersion,
+						error: {
+							code: 404,
+							message: `Could not find the associated resource for ${this.model.tableName}`
+						}
+					});
+				}
+
+				/**
+				 * Check unique attributes
+				 */
+				const uniqueErrors: ErrorInterface[] = [];
+				const uniqueQuery = this.model.query().select(['id']);
+				for (const attribute of uniqueAttributes.filter(item => Object.keys(postData).includes(item))) {
+					const existedData = await uniqueQuery.where(attribute, postData[attribute]).andWhereNot({ id });
+					errorAppender(uniqueErrors, existedData.length > 0, { location: attribute, message: `Input ${attribute} is already existed` });
+				}
+				if (uniqueErrors.length) {
+					return res.status(400).json({
+						apiVersion,
+						error: {
+							code: 400,
+							message: 'Error during input validation.',
+							errors: uniqueErrors,
+						}
+					});
+				}
+
+				/**
+				 * Send additional data
+				 */
+				let input = postData;
+				if (columnInfo.includes('updated_at')) input = {
+					...input,
+					updated_at: moment().format('YYYY-MM-DD HH:mm:ss')
+				}
+				if (columnInfo.includes('updated_by')) input = {
+					...input,
+					updated_by: userData.id
+				}
+
+				await this.model.query().findById(id).patch(input);
+				let query = this.model.query().findById(id);
+				if (shownAttributes.length) query = query.select(shownAttributes);
+				const updatedResource = await query;
+
+				return res.status(200).json({
+					apiVersion,
+					data: {
+						kind: this.model.tableName,
+						...updatedResource
+					}
+				});
+			} catch (e) {
+				console.error(`Error occured when trying to edit ${this.model.tableName} data: ${e.message}`);
+				return res.status(500).json({
+					apiVersion,
+					error: {
+						code: 500,
+						message: `Could not edit ${this.model.tableName} data`
+					}
+				});
+			}
+		});
+	}
+
+	deleteData(overrideConfig?: FetchingConfig) {
+		return (async (req: Request, res: Response) => {
+			const apiVersion = res.locals.apiVersion;
+			try {
+				const config = overrideConfig ? overrideConfig : this.config.deleteData;
+				const shownAttributes = config.shownAttributes || [];
+				const filterByUser = config.filterByUser || false;
+				const populateAttributes = config.populateAttributes || [];
+
+				const columnInfo = Object.keys(await this.model.query().columnInfo());
+				const id = req.params[this.idParam];
+				const userData: any = req.user;
+
+				/**
+				 * Check existing resource
+				 */
+				let existingQuery = this.model.query().findById(id);
+				if (filterByUser && columnInfo.includes('created_by')) {
+					existingQuery = existingQuery.where({ created_by: userData.id });
+				}
+				const existingResource = await existingQuery.select('id');
+				if (!existingResource) {
+					return res.status(404).json({
+						apiVersion,
+						error: {
+							code: 404,
+							message: `Could not find the associated resource for ${this.model.tableName}`
+						}
+					});
+				}
+
+				let deleteQuery = this.model.query().findById(id);
+
+				/**
+				 * Populating attribute
+				 */
+				if (populateAttributes.length) {
+					deleteQuery = deleteQuery.withGraphJoined(`[${populateAttributes.join(', ')}]`);
+				}
+
+				/**
+				 * Selecting specific attribute
+				 */
+				if (shownAttributes.length) {
+					deleteQuery = deleteQuery.select(shownAttributes);
+				}
+
+				const deletedResource = await deleteQuery;
+				await this.model.query().deleteById(id);
+
+				return res.status(200).json({
+					apiVersion,
+					data: {
+						kind: this.model.tableName,
+						...deletedResource
+					}
+				});
+			} catch (e) {
+				console.error(`Error occured when trying to delete ${this.model.tableName} data: ${e.message}`);
+				return res.status(500).json({
+					apiVersion,
+					error: {
+						code: 500,
+						message: `Could not delete ${this.model.tableName} data`
+					}
+				});
+			}
+		});
+	}
+
+	@bind
+	middlewareValidation(body: any, req: Request, error: ErrorInterface[]) { }
 }
 
 export default GenericHandler;

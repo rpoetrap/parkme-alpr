@@ -23,6 +23,7 @@
   "homepage": "https://github.com/rpoetrap/parkme-alpr#readme",
   "dependencies": {
     "bcrypt": "^5.0.0",
+    "bind-decorator": "^1.0.11",
     "body-parser": "^1.19.0",
     "cli-progress": "^3.8.2",
     "connect-session-knex": "^1.7.3",
