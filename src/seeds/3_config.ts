@@ -6,6 +6,7 @@ export async function seed(knex: Knex): Promise<void> {
 	const data = [
 		{
 			id: 1,
+			label: 'Hanya ID terdaftar',
 			key: 'registeredOnly',
 			value: 'true'
 		}
