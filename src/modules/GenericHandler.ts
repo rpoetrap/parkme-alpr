@@ -31,7 +31,7 @@ interface HandlerConfig {
 
 class GenericModel extends Model {
 	id: number | string;
-};
+}
 
 class GenericHandler<M extends typeof GenericModel> {
 	private model: M;
@@ -308,7 +308,7 @@ class GenericHandler<M extends typeof GenericModel> {
 				if (columnInfo.includes('created_by')) input = {
 					...input,
 					created_by: userData.id
-				}
+				};
 
 				const result = await this.model.query().insert(input);
 				let query = this.model.query().findById(result.id);
@@ -438,11 +438,11 @@ class GenericHandler<M extends typeof GenericModel> {
 				if (columnInfo.includes('updated_at')) input = {
 					...input,
 					updated_at: moment().format('YYYY-MM-DD HH:mm:ss')
-				}
+				};
 				if (columnInfo.includes('updated_by')) input = {
 					...input,
 					updated_by: userData.id
-				}
+				};
 
 				await this.model.query().findById(id).patch(input);
 				let query = this.model.query().findById(id);
@@ -540,7 +540,9 @@ class GenericHandler<M extends typeof GenericModel> {
 	}
 
 	@bind
-	middlewareValidation(body: any, req: Request, error: ErrorInterface[]) { }
+	protected middlewareValidation(body: any, req: Request, error: ErrorInterface[]) {
+		// Put your validation here
+	}
 }
 
 export default GenericHandler;

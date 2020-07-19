@@ -8,7 +8,7 @@ import { ErrorInterface, errorAppender } from '../helpers/string';
 class UserHandler extends GenericHandler<typeof User> {
 	@bind
 	middlewareValidation(body: any, req: Request, error: ErrorInterface[]) {
-
+		// Put your validation here
 	}
 }
 
