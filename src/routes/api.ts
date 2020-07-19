@@ -4,6 +4,7 @@ import authHandler from '../handlers/auth';
 import userHandler from '../handlers/users';
 import configHandler from '../handlers/config';
 import gateHandler from '../handlers/gate';
+import historyHandler from '../handlers/history';
 
 const r = express.Router();
 
@@ -51,6 +52,12 @@ r.patch('/gates/register', gateHandler.validateCode(), gateHandler.patchData({ m
 r.get('/gates/:gateId', authHandler.middlewareAuthCheck(), gateHandler.getSingle());
 r.patch('/gates/:gateId', authHandler.middlewareAuthCheck(), gateHandler.patchData());
 r.delete('/gates/:gateId', authHandler.middlewareAuthCheck(), gateHandler.deleteData());
+
+/**
+ * History
+ */
+r.get('/histories', authHandler.middlewareAuthCheck(), historyHandler.getList());
+r.get('/histories/:historyId', authHandler.middlewareAuthCheck(), historyHandler.getSingle());
 
 r.get('/', (req: Request, res: Response) => {
 	return res.json({
