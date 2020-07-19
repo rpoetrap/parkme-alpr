@@ -3,6 +3,7 @@ import express, { Request, Response } from 'express';
 import authHandler from '../handlers/auth';
 import userHandler from '../handlers/users';
 import configHandler from '../handlers/config';
+import gateHandler from '../handlers/gate';
 
 const r = express.Router();
 
@@ -40,6 +41,16 @@ r.delete('/users/:userId', authHandler.middlewareAuthCheck(), userHandler.delete
 r.get('/configs', authHandler.middlewareAuthCheck(), configHandler.getList());
 r.get('/configs/:configId', authHandler.middlewareAuthCheck(), configHandler.getSingle());
 r.patch('/configs/:configId', authHandler.middlewareAuthCheck(), configHandler.patchData());
+
+/**
+ * Gate
+ */
+r.get('/gates', authHandler.middlewareAuthCheck(), gateHandler.getList());
+r.post('/gates', authHandler.middlewareAuthCheck(), gateHandler.generateCode(), gateHandler.postData());
+r.patch('/gates/register', gateHandler.validateCode(), gateHandler.patchData({ mutableAttributes: ['code', 'session_id'], requiredAttributes: ['session_id'] }));
+r.get('/gates/:gateId', authHandler.middlewareAuthCheck(), gateHandler.getSingle());
+r.patch('/gates/:gateId', authHandler.middlewareAuthCheck(), gateHandler.patchData());
+r.delete('/gates/:gateId', authHandler.middlewareAuthCheck(), gateHandler.deleteData());
 
 r.get('/', (req: Request, res: Response) => {
 	return res.json({

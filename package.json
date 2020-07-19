@@ -28,6 +28,7 @@
     "cli-progress": "^3.8.2",
     "connect-session-knex": "^1.7.3",
     "cookie-parser": "^1.4.5",
+    "crypto-random-string": "^3.2.0",
     "darknet": "^2.0.17",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
