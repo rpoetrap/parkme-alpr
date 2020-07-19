@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 
 import authHandler from '../handlers/auth';
 import userHandler from '../handlers/users';
+import configHandler from '../handlers/config';
 
 const r = express.Router();
 
@@ -32,6 +33,13 @@ r.post('/users', authHandler.middlewareAuthCheck(), userHandler.postData());
 r.get('/users/:userId', authHandler.middlewareAuthCheck(), userHandler.getSingle());
 r.patch('/users/:userId', authHandler.middlewareAuthCheck(), userHandler.patchData());
 r.delete('/users/:userId', authHandler.middlewareAuthCheck(), userHandler.deleteData());
+
+/**
+ * Config
+ */
+r.get('/configs', authHandler.middlewareAuthCheck(), configHandler.getList());
+r.get('/configs/:configId', authHandler.middlewareAuthCheck(), configHandler.getSingle());
+r.patch('/configs/:configId', authHandler.middlewareAuthCheck(), configHandler.patchData());
 
 r.get('/', (req: Request, res: Response) => {
 	return res.json({
