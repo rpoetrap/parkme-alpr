@@ -13,7 +13,7 @@ class UserHandler extends GenericHandler<typeof User> {
 }
 
 const userHandler = new UserHandler({
-	getList: { filterByUser: true, populateAttributes: [], shownAttributes: [] },
+	getList: { populateAttributes: [], shownAttributes: [] },
 	getSingle: { populateAttributes: [], shownAttributes: [] },
 	postData: { requiredAttributes: ['name'], mutableAttributes: [], uniqueAttributes: ['user_identifier', 'photo_id'], shownAttributes: [] },
 	patchData: { requiredAttributes: [], mutableAttributes: [], uniqueAttributes: ['user_identifier', 'photo_id'], shownAttributes: [] },
