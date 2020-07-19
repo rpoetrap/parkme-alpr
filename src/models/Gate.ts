@@ -3,6 +3,7 @@ import { Model } from 'objection';
 class Gate extends Model {
 	id: number;
 	session_id: string;
+	code?: string;
 	name: string;
 	description: string;
 	created_at: string;
