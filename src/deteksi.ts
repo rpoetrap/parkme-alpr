@@ -123,21 +123,15 @@ try {
 		const dataset = trainingData.slice().sort(() => Math.random() - 0.5);
 		console.log('start');
 		while (!(error <= toleransi)) {
-			if (false) {
-				console.log('Initializing dataset');
-				const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-				bar.start(dataset.length, 0);
-				for (let [idx, data] of dataset.entries()) {
-					const inputData = normalizeData(await cv.imreadAsync(data.filePath));
-					error = backpro.train(inputData, data.output, learningRate);
-					bar.update(idx + 1);
-				}
-				bar.stop();
-			} else {
-				const data = dataset[(epoch - 1) % dataset.length];
+			console.log('Initializing dataset');
+			const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+			bar.start(dataset.length, 0);
+			for (let [idx, data] of dataset.entries()) {
 				const inputData = normalizeData(await cv.imreadAsync(data.filePath));
 				error = backpro.train(inputData, data.output, learningRate);
+				bar.update(idx + 1);
 			}
+			bar.stop();
 			console.log(`Epoch ${epoch}: ${error}`);
 			epoch++;
 			if (error < lowest) {
