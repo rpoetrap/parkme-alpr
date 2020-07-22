@@ -68,12 +68,14 @@ try {
 		const inputData = normalizeData(await cv.imreadAsync(selectedData.filePath));
 
 		const toleransi = 0.001;
-		const learningRate = 0.0001;
+		const learningRate = 0.06;
 		let error = 1;
 		let epoch = 1;
+		let lowest = 1;
 		// const iterasi = 1000000;
 
 		const backpro = new Backpropagation(inputData.length, [547], outputs);
+		// backpro.load();
 
 		// console.log('start');
 		// while (!(error <= toleransi)) {
@@ -95,19 +97,53 @@ try {
 		//   epoch++;
 		// };
 
+		// console.log('start');
+		// while (!(error <= toleransi)) {
+		// 	if (epoch == 1) {
+		// 		let tempError: number[] = [];
+		// 		for (const char of outputs) {
+		// 			const data = sample(trainingData.filter(item => item.output == char))!;
+		// 			const inputData = normalizeData(await cv.imreadAsync(data.filePath));
+		// 			tempError.push(backpro.train(inputData, data.output, learningRate));
+		// 		}
+		// 		error = mean(tempError);
+		// 		tempError = [];
+		// 	} else {
+		// 		  const data = sample(trainingData)!;
+		// 		  const inputData = normalizeData(await cv.imreadAsync(data.filePath));
+		// 		  error = backpro.train(inputData, data.output, learningRate);
+		// 	}
+		// 	console.log(`Epoch ${epoch}: ${error}`);
+		// 	epoch++;
+		// 	if (error < lowest) {
+		// 		lowest = error;
+		// 		backpro.save();
+		// 	}
+		// };
+		const dataset = trainingData.slice().sort(() => Math.random() - 0.5);
 		console.log('start');
 		while (!(error <= toleransi)) {
-			let tempError: number[] = [];
-			for (const char of outputs) {
-				const data = sample(trainingData.filter(item => item.output == char))!;
+			if (false) {
+				console.log('Initializing dataset');
+				const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+				bar.start(dataset.length, 0);
+				for (let [idx, data] of dataset.entries()) {
+					const inputData = normalizeData(await cv.imreadAsync(data.filePath));
+					error = backpro.train(inputData, data.output, learningRate);
+					bar.update(idx + 1);
+				}
+				bar.stop();
+			} else {
+				const data = dataset[(epoch - 1) % dataset.length];
 				const inputData = normalizeData(await cv.imreadAsync(data.filePath));
-				tempError.push(backpro.train(inputData, data.output, learningRate));
+				error = backpro.train(inputData, data.output, learningRate);
 			}
-			error = mean(tempError);
-			tempError = [];
 			console.log(`Epoch ${epoch}: ${error}`);
 			epoch++;
-			backpro.save();
+			if (error < lowest) {
+				lowest = error;
+				backpro.save();
+			}
 		};
 
 		let correct = 0;
