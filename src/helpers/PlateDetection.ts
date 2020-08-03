@@ -17,7 +17,7 @@ import cv, {
 import Jimp from 'jimp';
 
 import { darknet } from '../configs/darknet';
-import { max, divide, multiply, round } from 'mathjs';
+import { max, divide, multiply, round, ones } from 'mathjs';
 
 /**
  * Contain Automatic License Plate Recognition process
@@ -88,11 +88,11 @@ export default class PlateDetection {
    * @param image OpenCV image matrix
    * @param blur Apply blur filter
    */
-	private async convertToBinary(image: Mat, blur = true) {
+	private async convertToBinary(image: Mat, thresh = 180, blur = true) {
 		const hsvImage = (await image.cvtColorAsync(COLOR_BGR2HSV)).splitChannels();
 		const grayImage = hsvImage[2];
 		const blurImage = blur ? await grayImage.bilateralFilterAsync(11, 17, 17) : grayImage;
-		const binary = await blurImage.thresholdAsync(180, 255, THRESH_BINARY + THRESH_OTSU);
+		const binary = await blurImage.thresholdAsync(thresh, 255, THRESH_BINARY + THRESH_OTSU);
 		return binary;
 	}
 
@@ -161,20 +161,24 @@ export default class PlateDetection {
 	private async segmentation() {
 		if (this.foundPlate.length == 0) throw new Error('No plate detected');
 		console.log('detected');
-		
+
 		const resultImage = this.foundPlate[0];
 		const warped = await this.perspectiveTransform(resultImage);
 
 		const kernel = new Mat([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]], CV_8S);
 		const sharpened = await warped.filter2DAsync(-1, kernel);
 
-		const binaryWarped = await this.convertToBinary(sharpened, false);
+		const binaryWarped = await this.convertToBinary(warped, 50, false);
+		const kernelMorph = new Mat(ones([1, 2]) as number[][], CV_8S);
+		const morphed = await binaryWarped
+			.morphologyExAsync(kernelMorph, cv.MORPH_CLOSE)
+		await cv.imwriteAsync(`./tmp/sharpened.jpg`, morphed);
 		const filteredContours = await this.getContours(warped, false);
 
 		const regions: Mat[] = [];
 		for (const contour of filteredContours) {
 			const { width, height, x, y } = contour.boundingRect();
-			regions.push(binaryWarped.getRegion(contour.boundingRect()));
+			regions.push(morphed.getRegion(contour.boundingRect()));
 			// Draw bounding box
 			sharpened.drawRectangle(new Point2(x, y), new Point2(x + width, y + height), new Vec3(0, 0, 255), 1);
 		}
@@ -184,8 +188,8 @@ export default class PlateDetection {
 			resizedRegion.push(await this.resizeImage(region));
 		}
 		for (let [idx, detected] of regions.entries()) {
-		  const filledImage = await this.resizeImage(detected);
-		  await cv.imwriteAsync(`./tmp/char-${idx}.jpg`, filledImage);
+			const filledImage = await this.resizeImage(detected);
+			await cv.imwriteAsync(`./tmp/char-${idx}.jpg`, filledImage);
 		}
 		return resizedRegion;
 	}
