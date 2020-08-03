@@ -10,11 +10,11 @@ import cv, {
 	CHAIN_APPROX_SIMPLE,
 	Point2,
 	Size,
-	Contour,
 	Vec3,
 	CV_8S,
 	CV_8U
 } from 'opencv4nodejs';
+import Jimp from 'jimp';
 
 import { darknet } from '../configs/darknet';
 import { max, divide, multiply, round } from 'mathjs';
@@ -38,17 +38,34 @@ export default class PlateDetection {
    * Detect license plate and return segmented characters with OpenCV Mat format
    */
 	async detect() {
-		await this.localization();
-		const result = await this.segmentation();
-		return result;
+		try {
+			await this.localization();
+			const result = await this.segmentation();
+			return result;
+		} catch (e) {
+			console.log(e);
+			return [];
+		}
 	}
 
 	/**
    * License Plate Localization
    */
 	private async localization() {
-		const detectedPlates = darknet.detect(path.resolve(this.imagePath));
-		const rgbImage = await cv.imreadAsync(this.imagePath); // Load Image
+		const image = await Jimp.read(this.imagePath).then(image => {
+			const res = [
+				image.getHeight(),
+				image.getWidth(),
+			];
+			const targetSize = 720;
+			const scale = targetSize / max(res);
+			return image.scale(scale);
+		});
+		const buffer = await image.getBufferAsync(Jimp.MIME_JPEG);
+		const rgbImage = await cv.imdecodeAsync(buffer);
+		// const rgbImage = await cv.imreadAsync(this.imagePath); // Load Image
+		await cv.imwriteAsync(`./tmp/plate.jpg`, rgbImage);
+		const detectedPlates = darknet.detect(rgbImage);
 
 		for (const plate of detectedPlates) {
 			const { box: { h: height, w: width } } = plate;
@@ -60,6 +77,9 @@ export default class PlateDetection {
 			this.foundPlate.push(rgbImage.getRegion(rect));
 		}
 
+		for (const [idx] of Object.entries(this.foundPlate)) {
+			await cv.imwriteAsync(`./tmp/plate-${idx}.jpg`, this.foundPlate[idx]);
+		}
 		return this.foundPlate;
 	}
 
@@ -85,7 +105,7 @@ export default class PlateDetection {
 		const binary = await this.convertToBinary(image);
 
 		const contours = await binary.copy().findContoursAsync(RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-		const meanHeight = mean(contours.map(contour => contour.boundingRect().height)) / image.rows;
+		const meanHeight = mean(contours.map(contour => contour.boundingRect().height)) / (image.rows * 3);
 
 		const filteredContours = !filter ? contours : contours
 			.filter(contour => {
@@ -139,6 +159,9 @@ export default class PlateDetection {
    * Character Segmentation
    */
 	private async segmentation() {
+		if (this.foundPlate.length == 0) throw new Error('No plate detected');
+		console.log('detected');
+		
 		const resultImage = this.foundPlate[0];
 		const warped = await this.perspectiveTransform(resultImage);
 
@@ -160,11 +183,11 @@ export default class PlateDetection {
 		for (const region of regions) {
 			resizedRegion.push(await this.resizeImage(region));
 		}
+		for (let [idx, detected] of regions.entries()) {
+		  const filledImage = await this.resizeImage(detected);
+		  await cv.imwriteAsync(`./tmp/char-${idx}.jpg`, filledImage);
+		}
 		return resizedRegion;
-		// for (let [idx, detected] of regions.entries()) {
-		//   const filledImage = await this.resizeImage(detected);
-		//   await cv.imwriteAsync(`./tmp/char-${idx}.jpg`, filledImage);
-		// }
 	}
 
 	/**
@@ -186,8 +209,8 @@ export default class PlateDetection {
 		const canvas = filledImage.getDataAsArray();
 		const currentImage = resizedImage.getDataAsArray();
 
-		const startRow = round(14 - (rows / 2));
-		const startCol = round(14 - (cols / 2));
+		const startRow = round((targetSize / 2) - (rows / 2));
+		const startCol = round((targetSize / 2) - (cols / 2));
 
 		for (let row = startRow; row < (startRow + rows); row++) {
 			for (let col = startCol; col < (startCol + cols); col++) {
