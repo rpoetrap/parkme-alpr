@@ -7,6 +7,7 @@ export async function up(knex: Knex): Promise<void> {
 		table.string('session_id').unique().nullable();
 		table.string('code').unique().nullable();
 		table.string('name');
+		table.enum('type', ['in', 'out']).notNullable();
 		table.string('description');
 		table.dateTime('created_at').notNullable().defaultTo(knex.fn.now());
 		table.dateTime('updated_at').notNullable().defaultTo(knex.fn.now());

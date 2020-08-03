@@ -71,8 +71,8 @@ class GateHandler extends GenericHandler<typeof Gate> {
 const gateHandler = new GateHandler({
 	getList: { populateAttributes: [], shownAttributes: [] },
 	getSingle: { populateAttributes: [], shownAttributes: [] },
-	postData: { requiredAttributes: [], mutableAttributes: ['code', 'name', 'description'], uniqueAttributes: ['session_id', 'code'], shownAttributes: [] },
-	patchData: { requiredAttributes: [], mutableAttributes: ['name', 'description'], uniqueAttributes: ['session_id', 'code'], shownAttributes: [] },
+	postData: { requiredAttributes: ['code', 'name', 'type', 'description'], mutableAttributes: ['code', 'name', 'type', 'description'], uniqueAttributes: ['session_id', 'code'], shownAttributes: [] },
+	patchData: { requiredAttributes: [], mutableAttributes: ['name', 'type', 'description'], uniqueAttributes: ['session_id', 'code'], shownAttributes: [] },
 	deleteData: { populateAttributes: [], shownAttributes: [] },
 }, Gate, 'gateId');
 

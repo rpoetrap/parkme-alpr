@@ -5,6 +5,7 @@ class Gate extends Model {
 	session_id: string;
 	code?: string;
 	name: string;
+	type: string;
 	description: string;
 	created_at: string;
 	updated_at: string;
