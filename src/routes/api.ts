@@ -5,6 +5,8 @@ import userHandler from '../handlers/users';
 import configHandler from '../handlers/config';
 import gateHandler from '../handlers/gate';
 import historyHandler from '../handlers/history';
+import roleHandler from '../handlers/role';
+import smartcardHandler from '../handlers/smartcard';
 
 const r = express.Router();
 
@@ -52,6 +54,24 @@ r.patch('/gates/register', gateHandler.validateCode(), gateHandler.patchData({ m
 r.get('/gates/:gateId', authHandler.middlewareAuthCheck(), gateHandler.getSingle());
 r.patch('/gates/:gateId', authHandler.middlewareAuthCheck(), gateHandler.patchData());
 r.delete('/gates/:gateId', authHandler.middlewareAuthCheck(), gateHandler.deleteData());
+
+/**
+ * Card Access
+ */
+r.get('/roles', authHandler.middlewareAuthCheck(), roleHandler.getList());
+r.post('/roles', authHandler.middlewareAuthCheck(), roleHandler.postData());
+r.get('/roles/:roleId', authHandler.middlewareAuthCheck(), roleHandler.getSingle());
+r.patch('/roles/:roleId', authHandler.middlewareAuthCheck(), roleHandler.patchData());
+r.delete('/roles/:roleId', authHandler.middlewareAuthCheck(), roleHandler.deleteData());
+
+/**
+ * Smart Card
+ */
+r.get('/smartcards', authHandler.middlewareAuthCheck(), smartcardHandler.getList());
+r.post('/smartcards', authHandler.middlewareAuthCheck(), smartcardHandler.postData());
+r.get('/smartcards/:smartcardId', authHandler.middlewareAuthCheck(), smartcardHandler.getSingle());
+r.patch('/smartcards/:smartcardId', authHandler.middlewareAuthCheck(), smartcardHandler.patchData());
+r.delete('/smartcards/:smartcardId', authHandler.middlewareAuthCheck(), smartcardHandler.deleteData());
 
 /**
  * History
