@@ -105,7 +105,7 @@ export default class PlateDetection {
 		const binary = await this.convertToBinary(image);
 
 		const contours = await binary.copy().findContoursAsync(RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-		const meanHeight = mean(contours.map(contour => contour.boundingRect().height)) / (image.rows * 3);
+		const meanHeight = mean(contours.map(contour => contour.boundingRect().height)) / image.rows;
 
 		const filteredContours = !filter ? contours : contours
 			.filter(contour => {
