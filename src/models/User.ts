@@ -1,4 +1,5 @@
 import { Model } from 'objection';
+import File from './File';
 
 class User extends Model {
 	id: number;
@@ -12,6 +13,19 @@ class User extends Model {
 
 	static get tableName() {
 		return 'users';
+	}
+
+	static get relationMappings() {
+    return {
+      photo: {
+        relation: Model.HasOneRelation,
+        modelClass: File,
+        join: {
+          from: `${this.tableName}.photo_id`,
+          to: `${File.tableName}.id`
+        }
+			},
+		}
 	}
 }
 

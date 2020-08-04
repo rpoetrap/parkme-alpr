@@ -25,9 +25,10 @@ r.get('/auth/nonauth', authHandler.middlewareNonAuthCheck(), (req: Request, res:
 		message: 'You are not authenticated'
 	});
 });
-r.post('/auth/register', authHandler.postRegister());
-r.post('/auth/login', authHandler.postLogin());
-r.post('/auth/logout', authHandler.postLogout());
+r.get('/auth/info', authHandler.middlewareAuthCheck(), authHandler.getUserInfo());
+r.post('/auth/register', authHandler.middlewareNonAuthCheck(), authHandler.postRegister());
+r.post('/auth/login', authHandler.middlewareNonAuthCheck(), authHandler.postLogin());
+r.post('/auth/logout', authHandler.middlewareAuthCheck(), authHandler.postLogout());
 
 /**
  * Users

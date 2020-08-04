@@ -212,6 +212,47 @@ class GenericHandler {
 		});
 	}
 
+	getUserInfo() {
+		return (async (req: Request, res: Response) => {
+			const apiVersion = res.locals.apiVersion;
+			try {
+				const userData: any = req.user;
+				const foundUser = await User.query()
+					.leftJoinRelated('photo')
+					.findById(userData.id)
+					.select(User.ref('*'))
+					.select({
+						photo_url: 'photo.url'
+					});
+				if (!foundUser) {
+					res.clearCookie(process.env.ACCESS_TOKEN_NAME);
+					return res.status(401).json({
+						apiVersion,
+						error: {
+							code: 401,
+							message: 'Unauthorized user request',
+							expiredToken: false
+						}
+					});
+				}
+				return res.json({
+					apiVersion,
+				message: 'You are authenticated',
+					data: foundUser
+				});
+			} catch (e) {
+				console.error(`Could not get user info: ${e.message}`);
+				return res.status(500).json({
+					apiVersion,
+					error: {
+						code: 500,
+						message: 'Could not get user info.'
+					}
+				});
+			}
+		});
+	}
+
 	middlewareAuthCheck() {
 		return [
 			(req: Request, res: Response, next: NextFunction) => {
