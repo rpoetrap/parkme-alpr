@@ -83,7 +83,10 @@ class GenericHandler<M extends typeof GenericModel> {
 					query = query.select(shownAttributes);
 				}
 
-				const { pageIndex: pageIndexQuery, itemsPerPage: itemsPerPageQuery, filters, sorts } = req.query;
+				const { pageIndex: pageIndexQuery, itemsPerPage: itemsPerPageQuery } = req.query;
+				let { filters, sorts } = req.query;
+				filters = filters || '';
+				sorts = sorts || '';
 
 				/**
 				 * Filtering
@@ -131,6 +134,8 @@ class GenericHandler<M extends typeof GenericModel> {
 					apiVersion,
 					data: {
 						kind: this.model.tableName,
+						filters,
+						sorts,
 						currentItemCount: results.length,
 						itemsPerPage,
 						totalItems: total,
