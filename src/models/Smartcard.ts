@@ -1,4 +1,6 @@
 import { Model } from 'objection';
+import User from './User';
+import Role from './Role';
 
 class Smartcard extends Model {
 	id: number;
@@ -13,6 +15,27 @@ class Smartcard extends Model {
 
 	static get tableName() {
 		return 'smartcards';
+	}
+
+	static get relationMappings() {
+    return {
+      user: {
+        relation: Model.HasOneRelation,
+        modelClass: User,
+        join: {
+          from: `${this.tableName}.owner`,
+          to: `${User.tableName}.id`
+        }
+			},
+      role: {
+        relation: Model.HasOneRelation,
+        modelClass: Role,
+        join: {
+          from: `${this.tableName}.role_id`,
+          to: `${Role.tableName}.id`
+        }
+			}
+		}
 	}
 }
 

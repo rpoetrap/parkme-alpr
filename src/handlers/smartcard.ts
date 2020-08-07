@@ -13,8 +13,8 @@ class SmartcardHandler extends GenericHandler<typeof Smartcard> {
 }
 
 const smartcardHandler = new SmartcardHandler({
-	getList: { populateAttributes: [], shownAttributes: [] },
-	getSingle: { populateAttributes: [], shownAttributes: [] },
+	getList: { populateAttributes: ['user', 'role'], shownAttributes: [] },
+	getSingle: { populateAttributes: ['user', 'role'], shownAttributes: [] },
 	postData: { requiredAttributes: [], mutableAttributes: [], uniqueAttributes: [], shownAttributes: [] },
 	patchData: { requiredAttributes: [], mutableAttributes: [], uniqueAttributes: [], shownAttributes: [] },
 	deleteData: { populateAttributes: [], shownAttributes: [] },
