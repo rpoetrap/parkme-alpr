@@ -79,6 +79,7 @@ r.delete('/smartcards/:smartcardId', authHandler.middlewareAuthCheck(), smartcar
  */
 r.get('/histories', authHandler.middlewareAuthCheck(), historyHandler.getList());
 r.get('/histories/:historyId', authHandler.middlewareAuthCheck(), historyHandler.getSingle());
+r.get('/stats', authHandler.middlewareAuthCheck(), historyHandler.getStats());
 
 r.get('/', (req: Request, res: Response) => {
 	return res.json({
