@@ -9,6 +9,7 @@ import User from '../models/User';
 import Config from '../models/Config';
 import { ErrorInterface, errorAppender } from '../helpers/string';
 import Auth from '../models/Auth';
+import Gate from '../models/Gate';
 
 class GenericHandler {
 	postRegister() {
@@ -314,6 +315,48 @@ class GenericHandler {
 				});
 			}
 		});
+	}
+
+	middlewareGateCheck() {
+		return [
+			async (req: Request, res: Response, next: NextFunction) => {
+				const apiVersion = res.locals.apiVersion;
+				try {
+					const sessionId = req.headers['session-id'];
+					if (!sessionId) {
+						return res.status(401).json({
+							apiVersion,
+							error: {
+								code: 401,
+								message: 'Unauthorized gate request'
+							}
+						});
+					}
+
+					const foundGate = await Gate.query().findOne('session_id', sessionId);
+					if (!foundGate) {
+						return res.status(401).json({
+							apiVersion,
+							error: {
+								code: 401,
+								message: 'Unauthorized gate request'
+							}
+						});
+					}
+					req.user = foundGate;
+					return next();
+				} catch (e) {
+					console.error(`Could not pass check authentication middleware: ${e.message}`);
+					return res.status(500).json({
+						apiVersion,
+						error: {
+							code: 500,
+							message: 'Could not check your authentication, please try again'
+						}
+					});
+				}
+			}
+		];
 	}
 }
 
