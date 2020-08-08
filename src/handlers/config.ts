@@ -16,7 +16,7 @@ const configHandler = new ConfigHandler({
 	getList: { populateAttributes: [], shownAttributes: [] },
 	getSingle: { populateAttributes: [], shownAttributes: [] },
 	postData: { requiredAttributes: [], mutableAttributes: [], uniqueAttributes: ['key'], shownAttributes: [] },
-	patchData: { requiredAttributes: ['label', 'value'], mutableAttributes: ['label', 'value'], uniqueAttributes: ['key'], shownAttributes: [] },
+	patchData: { requiredAttributes: ['value'], mutableAttributes: ['value'], uniqueAttributes: ['key'], shownAttributes: [] },
 	deleteData: { populateAttributes: [], shownAttributes: [] },
 }, Config, 'configId');
 
