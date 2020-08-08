@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
 import { Model, ColumnRefOrOrderByDescriptor, ReferenceBuilder } from 'objection';
-import { pick, isEmpty } from 'lodash';
+import { pick, isEmpty, isNil } from 'lodash';
 import moment from 'moment';
 import bind from 'bind-decorator';
+import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
 
 import { stringToInteger, splitOperator, ErrorInterface, errorAppender } from '../helpers/string';
 
@@ -21,12 +24,22 @@ interface MutatingConfig extends GenericConfig {
 	requiredAttributes?: string[];
 }
 
+interface PostUploadConfig extends MutatingConfig {
+	maxFile?: number;
+	maxSize?: number;
+	mimetype?: string[];
+	fileExtension?: string[];
+	uploadPath: string;
+}
+
+
 interface HandlerConfig {
 	getList: FetchingConfig,
 	getSingle: FetchingConfig,
 	postData: MutatingConfig,
 	patchData: MutatingConfig,
-	deleteData: FetchingConfig
+	deleteData: FetchingConfig,
+	postUpload?: PostUploadConfig,
 }
 
 class GenericModel extends Model {
@@ -37,11 +50,13 @@ class GenericHandler<M extends typeof GenericModel> {
 	protected model: M;
 	protected idParam: string;
 	private config: HandlerConfig;
+	protected isFile: boolean;
 
-	constructor(config: HandlerConfig, model: M, idParam: string) {
+	constructor(config: HandlerConfig, model: M, idParam: string, isFile = false) {
 		this.config = config;
 		this.model = model;
 		this.idParam = idParam;
+		this.isFile = isFile;
 	}
 
 	getList(overrideConfig?: FetchingConfig) {
@@ -542,6 +557,162 @@ class GenericHandler<M extends typeof GenericModel> {
 				});
 			}
 		});
+	}
+
+	postUploadFile(overridingConfiguration?: PostUploadConfig) {
+		if (!this.isFile) return undefined;
+		return async (req: Request, res: Response) => {
+			const apiVersion = res.locals.apiVersion;
+			try {
+				const input = req.body;
+				const config = overridingConfiguration ? overridingConfiguration : this.config.postUpload;
+				const storage = multer.diskStorage({
+					destination: config.uploadPath,
+					filename: (req, file, callback) => {
+						callback(null, moment().unix() + '-' + uuidv4() + path.extname(file.originalname).toLowerCase());
+					}
+				});
+				const upload = multer({
+					storage: storage,
+					limits: {
+						files: config.maxFile || 5,
+						fileSize: config.maxSize
+					},
+					fileFilter: (req, file, cb) => {
+						if (config.mimetype) {
+							if (!config.mimetype.includes(file.mimetype)) {
+								return cb(new Error('Error while uploading: ' + file.originalname + ', file type not allowed!'));
+							}
+						}
+						if (config.fileExtension) {
+							if (!config.fileExtension.includes(path.extname(file.originalname).substr(1).toLowerCase())) {
+								return cb(new Error('Error while uploading: ' + file.originalname + ', file extension not allowed!'));
+							}
+						}
+						return cb(null, true);
+					}
+				}).array('files');
+
+				return upload(req, res, async (err) => {
+					let {
+						shownAttributes,
+						mutableAttributes,
+						uniqueAttributes,
+						requiredAttributes
+					} = config;
+
+					uniqueAttributes = uniqueAttributes ? uniqueAttributes : [];
+					mutableAttributes = mutableAttributes ? mutableAttributes : [];
+					shownAttributes = shownAttributes ? shownAttributes : [];
+					requiredAttributes = requiredAttributes ? requiredAttributes : [];
+
+					const missingErrors: ErrorInterface[] = [];
+
+					requiredAttributes.forEach((val) => {
+						if (isNil(req.body[val])) {
+							errorAppender(missingErrors, true, { location: val });
+						}
+					});
+
+					if (missingErrors.length) {
+						return res.status(400).json({
+							error: {
+								code: 400,
+								message: 'Error during input validation.',
+								errors: missingErrors,
+							}
+						});
+					}
+
+					const uniqueQuery = this.model.query().select(['id']);
+					const columnInfo = await this.model.query().columnInfo();
+
+					const attributes = Object.keys(columnInfo).map(val => val);
+
+					const trimmedInput = pick(input, attributes);
+
+					// Unique attributes that is supposed to unique but exist in the DB.
+					const existingUniqueAttributes: (string | undefined)[] = [];
+
+					for (let i = 0; i < uniqueAttributes.length; i++) {
+						const val = uniqueAttributes[i];
+						const existingResource = await uniqueQuery.andWhere(val, '=', trimmedInput[val]);
+
+						if (existingResource.length) {
+							existingUniqueAttributes.push(val);
+						}
+					}
+
+					const errors: ErrorInterface[] = [];
+					if (err) errorAppender(errors, err, { location: 'files', message: 'Error while uploading files. ' + err.message });
+					existingUniqueAttributes.forEach((val) => {
+						errorAppender(errors, true, { location: val, message: `Input ${val} is already existed` });
+					});
+
+					if (errors.length) {
+						return res.status(400).json({
+							error: {
+								code: 400,
+								message: 'Error during input validation.',
+								errors,
+							}
+						});
+					}
+
+					const allowedInput = mutableAttributes && mutableAttributes.length ?
+						pick(trimmedInput, mutableAttributes) :
+						trimmedInput;
+
+					let createdResults = [];
+					const files: any = req.files;
+
+					errorAppender(errors, (!files || !files.length), { location: 'files', message: 'Files should not be empty!' });
+					if (errors.length) {
+						return res.status(400).json({
+							error: {
+								code: 400,
+								message: 'Error during input validation.',
+								errors,
+							}
+						});
+					}
+
+					for (const item of files) {
+						const filedata: any = {
+							filename: item.originalname,
+							mime: item.mimetype,
+							path: process.cwd() + '/' + item.path,
+							url: item.path.split('/').slice(1).join('/'),
+							extension: path.extname(item.originalname).substr(1).toLowerCase(),
+							filesize: item.size
+						}
+						const result = await this.model.query().insert({ ...filedata, ...allowedInput });
+						createdResults.push(shownAttributes && shownAttributes.length ?
+							await this.model.query().findById(result.id).select(shownAttributes) :
+							await this.model.query().findById(result.id)
+						);
+					}
+
+					return res.json({
+						apiVersion,
+						data: {
+							kind: this.model.tableName,
+							items: createdResults
+						}
+					});
+
+				})
+			} catch (e) {
+				console.error(`Error occured when trying to upload ${this.model.tableName} with: ${e.message}`);
+				return res.status(500).json({
+					apiVersion,
+					error: {
+						code: 500,
+						message: `Could not upload ${this.model.tableName}`
+					}
+				});
+			}
+		}
 	}
 
 	@bind

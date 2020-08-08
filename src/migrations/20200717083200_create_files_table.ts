@@ -5,7 +5,7 @@ export async function up(knex: Knex): Promise<void> {
 	return knex.schema.createTable('files', table => {
 		table.increments('id');
 		table.string('filename');
-		table.string('filetype');
+		table.string('extension');
 		table.string('mime');
 		table.string('filesize');
 		table.string('path');
