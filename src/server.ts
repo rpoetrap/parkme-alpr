@@ -51,6 +51,8 @@ try {
 		next();
 	}, apiRoutes);
 
+	app.use('/uploads', express.static('uploads'));
+
 	app.use('*', (req: Request, res: Response): any => {
 		return res.status(404).json({
 			error: {

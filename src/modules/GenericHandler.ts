@@ -682,7 +682,7 @@ class GenericHandler<M extends typeof GenericModel> {
 							filename: item.originalname,
 							mime: item.mimetype,
 							path: process.cwd() + '/' + item.path,
-							url: item.path.split('/').slice(1).join('/'),
+							url: item.path,
 							extension: path.extname(item.originalname).substr(1).toLowerCase(),
 							filesize: item.size
 						}
