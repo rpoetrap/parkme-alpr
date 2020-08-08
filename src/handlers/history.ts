@@ -53,7 +53,7 @@ class HistoryHandler extends GenericHandler<typeof History> {
 				});
 				const result = await query;
 				result.map(history => {
-					const foundStats = statsList.find(item => item.date == moment(history.created_at).format(timeFormat));
+					const foundStats = statsList.find(item => item.date == moment(history.created_at).startOf(iterator).format(timeFormat));
 					if (foundStats) {
 						switch (history.action) {
 							case 'in':
