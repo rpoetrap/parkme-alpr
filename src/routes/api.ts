@@ -7,6 +7,8 @@ import gateHandler from '../handlers/gate';
 import historyHandler from '../handlers/history';
 import roleHandler from '../handlers/role';
 import smartcardHandler from '../handlers/smartcard';
+import cardTrxHandler from '../handlers/cardTrx';
+import fileHandler from '../handlers/file';
 
 const r = express.Router();
 
@@ -42,9 +44,17 @@ r.delete('/users/:userId', authHandler.middlewareAuthCheck(), userHandler.delete
 /**
  * Config
  */
-r.get('/configs', authHandler.middlewareAuthCheck(), configHandler.getList());
+r.get('/configs', configHandler.getList());
 r.get('/configs/:configId', authHandler.middlewareAuthCheck(), configHandler.getSingle());
 r.patch('/configs/:configId', authHandler.middlewareAuthCheck(), configHandler.patchData());
+
+/**
+ * File
+ */
+r.get('/files', authHandler.middlewareAuthCheck(), fileHandler.getList());
+r.post('/files', authHandler.middlewareAuthCheck(), fileHandler.postUploadFile());
+r.get('/files/:fileId', authHandler.middlewareAuthCheck(), fileHandler.getSingle());
+r.delete('/files/:fileId', authHandler.middlewareAuthCheck(), fileHandler.deleteData());
 
 /**
  * Gate
@@ -73,6 +83,14 @@ r.post('/smartcards', authHandler.middlewareAuthCheck(), smartcardHandler.postDa
 r.get('/smartcards/:smartcardId', authHandler.middlewareAuthCheck(), smartcardHandler.getSingle());
 r.patch('/smartcards/:smartcardId', authHandler.middlewareAuthCheck(), smartcardHandler.patchData());
 r.delete('/smartcards/:smartcardId', authHandler.middlewareAuthCheck(), smartcardHandler.deleteData());
+
+/**
+ * Parking
+ */
+r.get('/parking', authHandler.middlewareAuthCheck(), cardTrxHandler.getList());
+// r.post('/parking/in', authHandler.middlewareAuthCheck(), cardTrxHandler.postData());
+// r.post('/parking/out', authHandler.middlewareAuthCheck(), cardTrxHandler.deleteData());
+r.get('/parking/:cardTrxId', authHandler.middlewareAuthCheck(), cardTrxHandler.getSingle());
 
 /**
  * History
