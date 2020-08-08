@@ -61,7 +61,7 @@ class HistoryHandler extends GenericHandler<typeof History> {
 								break;
 							case 'out':
 								foundStats.out++;
-								foundStats.earnings += history.cost * history.totalTime;
+								foundStats.earnings += history.cost;
 								break;
 						}
 					}
