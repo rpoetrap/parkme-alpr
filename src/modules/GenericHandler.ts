@@ -34,8 +34,8 @@ class GenericModel extends Model {
 }
 
 class GenericHandler<M extends typeof GenericModel> {
-	private model: M;
-	private idParam: string;
+	protected model: M;
+	protected idParam: string;
 	private config: HandlerConfig;
 
 	constructor(config: HandlerConfig, model: M, idParam: string) {
