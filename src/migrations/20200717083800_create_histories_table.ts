@@ -6,6 +6,8 @@ export async function up(knex: Knex): Promise<void> {
 		table.increments('id');
 		table.json('smartcard');
 		table.string('action');
+		table.integer('cost').unsigned().nullable();
+		table.integer('totalTime').unsigned().nullable();
 		table.json('gate').nullable();
 		table.json('vehicle');
 		table.dateTime('created_at').notNullable().defaultTo(knex.fn.now());

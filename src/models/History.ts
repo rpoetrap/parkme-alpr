@@ -4,6 +4,8 @@ class History extends Model {
 	id: number;
 	smartcard: any;
 	action: string;
+	cost?: number;
+	totalTime?: number;
 	gate?: any;
 	vehicle: any;
 	created_at: string;

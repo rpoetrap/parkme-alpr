@@ -9,6 +9,18 @@ export async function seed(knex: Knex): Promise<void> {
 			label: 'Hanya ID terdaftar',
 			key: 'registeredOnly',
 			value: 'true'
+		},
+		{
+			id: 2,
+			label: 'Logo',
+			key: 'logo',
+			value: null
+		},
+		{
+			id: 3,
+			label: 'Harga',
+			key: 'cost',
+			value: '1000'
 		}
 	];
 
