@@ -88,8 +88,7 @@ r.delete('/smartcards/:smartcardId', authHandler.middlewareAuthCheck(), smartcar
  * Parking
  */
 r.get('/parking', authHandler.middlewareAuthCheck(), cardTrxHandler.getList());
-// r.post('/parking/in', authHandler.middlewareAuthCheck(), cardTrxHandler.postData());
-// r.post('/parking/out', authHandler.middlewareAuthCheck(), cardTrxHandler.deleteData());
+r.post('/parking', authHandler.middlewareGateCheck(), cardTrxHandler.postParking());
 r.get('/parking/:cardTrxId', authHandler.middlewareAuthCheck(), cardTrxHandler.getSingle());
 
 /**
