@@ -135,10 +135,10 @@ class CardTrxHandler extends GenericHandler<typeof CardTrx> {
 
 					result = await this.model.query().insert({ card_id: foundCard.id, vehicle_id: foundVehicle.id });
 					await History.query().insert({
-						smartcard: foundCard,
+						smartcard: JSON.stringify(foundCard),
 						action: type,
-						gate: gateData,
-						vehicle: foundVehicle,
+						gate: JSON.stringify(gateData),
+						vehicle: JSON.stringify(foundVehicle),
 						created_by: (foundCard as any).user
 					});
 				} else {
@@ -167,10 +167,10 @@ class CardTrxHandler extends GenericHandler<typeof CardTrx> {
 					if (!(foundCard as any).role.free_charge) cost = 0;
 					await this.model.query().deleteById(foundParkedVehicle.id);
 					await History.query().insert({
-						smartcard: foundCard,
+						smartcard: JSON.stringify(foundCard),
 						action: type,
-						gate: gateData,
-						vehicle: foundVehicle,
+						gate: JSON.stringify(gateData),
+						vehicle: JSON.stringify(foundVehicle),
 						created_by: (foundCard as any).user,
 						totalTime: moment().diff(moment(foundParkedVehicle.created_at)),
 						cost,
