@@ -52,6 +52,7 @@ class GateHandler extends GenericHandler<typeof Gate> {
 					}
 					req.params['gateId'] = String(foundGate.id);
 					req.body['code'] = null;
+					req.body['session_id'] = req.headers['session-id'];
 				}
 				next();
 			} catch (e) {
