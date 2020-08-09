@@ -23,15 +23,17 @@ import { max, divide, multiply, round, ones } from 'mathjs';
  * Contain Automatic License Plate Recognition process
  */
 export default class PlateDetection {
-	private imagePath!: string;
+	private imagePath: string;
+	private imageBuffer: Buffer;
 	private foundPlate: Mat[] = [];
 
 	/**
    * PlateDetection constructor
-   * @param imagePath image file directory
+   * @param image image file directory
    */
-	constructor(imagePath: string) {
-		this.imagePath = path.resolve(imagePath);
+	constructor(image: string | Buffer) {
+		if (image instanceof Buffer) this.imageBuffer = image;
+		else this.imagePath = path.resolve(image);
 	}
 
 	/**
@@ -42,8 +44,7 @@ export default class PlateDetection {
 			await this.localization();
 			const result = await this.segmentation();
 			return result;
-		} catch (e) {
-			console.log(e);
+		} catch {
 			return [];
 		}
 	}
@@ -52,7 +53,8 @@ export default class PlateDetection {
    * License Plate Localization
    */
 	private async localization() {
-		const image = await Jimp.read(this.imagePath).then(image => {
+		const imageRead = this.imageBuffer ? Jimp.read(this.imageBuffer) : Jimp.read(this.imagePath);
+		const image = await imageRead.then(image => {
 			const res = [
 				image.getHeight(),
 				image.getWidth(),
@@ -64,7 +66,7 @@ export default class PlateDetection {
 		const buffer = await image.getBufferAsync(Jimp.MIME_JPEG);
 		const rgbImage = await cv.imdecodeAsync(buffer);
 		// const rgbImage = await cv.imreadAsync(this.imagePath); // Load Image
-		await cv.imwriteAsync(`./tmp/plate.jpg`, rgbImage);
+		cv.imwriteAsync(`./tmp/plate.jpg`, rgbImage);
 		const detectedPlates = darknet.detect(rgbImage);
 
 		for (const plate of detectedPlates) {
@@ -78,7 +80,7 @@ export default class PlateDetection {
 		}
 
 		for (const [idx] of Object.entries(this.foundPlate)) {
-			await cv.imwriteAsync(`./tmp/plate-${idx}.jpg`, this.foundPlate[idx]);
+			cv.imwriteAsync(`./tmp/plate-${idx}.jpg`, this.foundPlate[idx]);
 		}
 		return this.foundPlate;
 	}
@@ -172,7 +174,7 @@ export default class PlateDetection {
 		const kernelMorph = new Mat(ones([1, 2]) as number[][], CV_8S);
 		const morphed = await binaryWarped
 			.morphologyExAsync(kernelMorph, cv.MORPH_CLOSE)
-		await cv.imwriteAsync(`./tmp/sharpened.jpg`, morphed);
+		cv.imwriteAsync(`./tmp/sharpened.jpg`, morphed);
 		const filteredContours = await this.getContours(warped, false);
 
 		const regions: Mat[] = [];
@@ -189,7 +191,7 @@ export default class PlateDetection {
 		}
 		for (let [idx, detected] of regions.entries()) {
 			const filledImage = await this.resizeImage(detected);
-			await cv.imwriteAsync(`./tmp/char-${idx}.jpg`, filledImage);
+			cv.imwriteAsync(`./tmp/char-${idx}.jpg`, filledImage);
 		}
 		return resizedRegion;
 	}
