@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { last, head, findLastIndex } from 'lodash';
 import { table, getBorderCharacters, TableUserConfig } from 'table';
+import { Mat } from 'opencv4nodejs';
 import {
 	matrix,
 	random,
@@ -16,6 +17,11 @@ import {
 	pow,
 	transpose
 } from 'mathjs';
+
+export interface Dataset {
+	filePath: string,
+	output: string
+}
 
 const tableConfig: TableUserConfig = {
 	border: getBorderCharacters('norc')
@@ -179,3 +185,14 @@ export default class Backpropagation {
 		console.log('Data loaded');
 	}
 }
+
+export const normalizeData = (data: Mat) => {
+	const result: number[] = [];
+	data.getDataAsArray().map(rowData => {
+		rowData.map(colData => {
+			result.push(colData);
+		});
+	});
+
+	return result;
+};
