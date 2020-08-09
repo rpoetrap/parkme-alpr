@@ -62,6 +62,12 @@ r.delete('/files/:fileId', authHandler.middlewareAuthCheck(), fileHandler.delete
 r.get('/gates', authHandler.middlewareAuthCheck(), gateHandler.getList());
 r.post('/gates', authHandler.middlewareAuthCheck(), gateHandler.generateCode(), gateHandler.postData());
 r.patch('/gates/register', gateHandler.validateCode(), gateHandler.patchData({ mutableAttributes: ['code', 'session_id'], requiredAttributes: ['session_id'] }));
+r.get('/gates/check', authHandler.middlewareGateCheck(), (req: Request, res: Response) => {
+	return res.json({
+		apiVersion: res.locals.apiVersion,
+		message: 'Gate registered'
+	});
+});
 r.get('/gates/:gateId', authHandler.middlewareAuthCheck(), gateHandler.getSingle());
 r.patch('/gates/:gateId', authHandler.middlewareAuthCheck(), gateHandler.patchData());
 r.delete('/gates/:gateId', authHandler.middlewareAuthCheck(), gateHandler.deleteData());
