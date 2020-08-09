@@ -12,8 +12,6 @@ class FileHandler extends GenericHandler<typeof File> {
 	}
 }
 
-console.log(process.cwd());
-
 const fileHandler = new FileHandler({
 	getList: { populateAttributes: [], shownAttributes: [] },
 	getSingle: { populateAttributes: [], shownAttributes: [] },
