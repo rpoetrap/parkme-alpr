@@ -14,24 +14,24 @@ class CardTrx extends Model {
 	}
 
 	static get relationMappings() {
-    return {
-      card: {
-        relation: Model.HasOneRelation,
-        modelClass: Smartcard,
-        join: {
-          from: `${this.tableName}.card_id`,
-          to: `${Smartcard.tableName}.id`
-        }
+		return {
+			card: {
+				relation: Model.HasOneRelation,
+				modelClass: Smartcard,
+				join: {
+					from: `${this.tableName}.card_id`,
+					to: `${Smartcard.tableName}.id`
+				}
 			},
-      vehicle: {
-        relation: Model.HasOneRelation,
-        modelClass: Vehicle,
-        join: {
-          from: `${this.tableName}.vehicle_id`,
-          to: `${Vehicle.tableName}.id`
-        }
+			vehicle: {
+				relation: Model.HasOneRelation,
+				modelClass: Vehicle,
+				join: {
+					from: `${this.tableName}.vehicle_id`,
+					to: `${Vehicle.tableName}.id`
+				}
 			},
-		}
+		};
 	}
 }
 

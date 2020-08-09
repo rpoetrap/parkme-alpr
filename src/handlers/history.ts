@@ -33,8 +33,8 @@ class HistoryHandler extends GenericHandler<typeof History> {
 				}
 
 				const mode: unitOfTime.StartOf = filter === 'today' ? 'day' : 'isoWeek';
-				const startTime = moment().startOf(mode);;
-				const endTime = moment().endOf(mode);;
+				const startTime = moment().startOf(mode);
+				const endTime = moment().endOf(mode);
 				
 				const statsList: { date: string, in: number, out: number, earnings: number}[] = [];
 				const iterator: unitOfTime.StartOf = mode === 'day' ? 'hour' : 'day';
@@ -56,13 +56,13 @@ class HistoryHandler extends GenericHandler<typeof History> {
 					const foundStats = statsList.find(item => item.date == moment(history.created_at).startOf(iterator).format(timeFormat));
 					if (foundStats) {
 						switch (history.action) {
-							case 'in':
-								foundStats.in++;
-								break;
-							case 'out':
-								foundStats.out++;
-								foundStats.earnings += history.cost;
-								break;
+						case 'in':
+							foundStats.in++;
+							break;
+						case 'out':
+							foundStats.out++;
+							foundStats.earnings += history.cost;
+							break;
 						}
 					}
 				});

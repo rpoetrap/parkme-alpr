@@ -663,7 +663,7 @@ class GenericHandler<M extends typeof GenericModel> {
 						pick(trimmedInput, mutableAttributes) :
 						trimmedInput;
 
-					let createdResults = [];
+					const createdResults = [];
 					const files: any = req.files;
 
 					errorAppender(errors, (!files || !files.length), { location: 'files', message: 'Files should not be empty!' });
@@ -685,7 +685,7 @@ class GenericHandler<M extends typeof GenericModel> {
 							url: item.path,
 							extension: path.extname(item.originalname).substr(1).toLowerCase(),
 							filesize: item.size
-						}
+						};
 						const result = await this.model.query().insert({ ...filedata, ...allowedInput });
 						createdResults.push(shownAttributes && shownAttributes.length ?
 							await this.model.query().findById(result.id).select(shownAttributes) :
@@ -701,7 +701,7 @@ class GenericHandler<M extends typeof GenericModel> {
 						}
 					});
 
-				})
+				});
 			} catch (e) {
 				console.error(`Error occured when trying to upload ${this.model.tableName} with: ${e.message}`);
 				return res.status(500).json({
@@ -712,7 +712,7 @@ class GenericHandler<M extends typeof GenericModel> {
 					}
 				});
 			}
-		}
+		};
 	}
 
 	@bind

@@ -82,7 +82,7 @@ class CardTrxHandler extends GenericHandler<typeof CardTrx> {
 
 					const backpro = new Backpropagation(detectedChars[0].length, hiddenLayer, charList);
 					backpro.load();
-					let vehiclePlate: string[] = [];
+					const vehiclePlate: string[] = [];
 					for (const data of detectedChars) {
 						const { output } = backpro.feedforward(data);
 						const result = (output.toArray() as number[][]).map(item => item[0]);
@@ -97,12 +97,12 @@ class CardTrxHandler extends GenericHandler<typeof CardTrx> {
 					const config = await Config.query().select('key', 'value');
 					config.map(item => {
 						switch (item.key) {
-							case 'registeredOnly':
-								registeredOnly = item.value === 'true';
-								break;
-							case 'cost':
-								cost = parseInt(item.value);
-								break;
+						case 'registeredOnly':
+							registeredOnly = item.value === 'true';
+							break;
+						case 'cost':
+							cost = parseInt(item.value);
+							break;
 						}
 					});
 
@@ -223,7 +223,7 @@ class CardTrxHandler extends GenericHandler<typeof CardTrx> {
 							created_by: (foundCard as any).user,
 							totalTime: moment().diff(moment(foundParkedVehicle.created_at)),
 							cost,
-						})
+						});
 						result = foundParkedVehicle;
 					}
 

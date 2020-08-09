@@ -18,24 +18,24 @@ class Smartcard extends Model {
 	}
 
 	static get relationMappings() {
-    return {
-      user: {
-        relation: Model.HasOneRelation,
-        modelClass: User,
-        join: {
-          from: `${this.tableName}.owner`,
-          to: `${User.tableName}.id`
-        }
+		return {
+			user: {
+				relation: Model.HasOneRelation,
+				modelClass: User,
+				join: {
+					from: `${this.tableName}.owner`,
+					to: `${User.tableName}.id`
+				}
 			},
-      role: {
-        relation: Model.HasOneRelation,
-        modelClass: Role,
-        join: {
-          from: `${this.tableName}.role_id`,
-          to: `${Role.tableName}.id`
-        }
+			role: {
+				relation: Model.HasOneRelation,
+				modelClass: Role,
+				join: {
+					from: `${this.tableName}.role_id`,
+					to: `${Role.tableName}.id`
+				}
 			}
-		}
+		};
 	}
 }
 

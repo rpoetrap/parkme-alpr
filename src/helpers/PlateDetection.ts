@@ -66,7 +66,7 @@ export default class PlateDetection {
 		const buffer = await image.getBufferAsync(Jimp.MIME_JPEG);
 		const rgbImage = await cv.imdecodeAsync(buffer);
 		// const rgbImage = await cv.imreadAsync(this.imagePath); // Load Image
-		cv.imwriteAsync(`./tmp/plate.jpg`, rgbImage);
+		cv.imwriteAsync('./tmp/plate.jpg', rgbImage);
 		const detectedPlates = darknet.detect(rgbImage);
 
 		for (const plate of detectedPlates) {
@@ -173,8 +173,8 @@ export default class PlateDetection {
 		const binaryWarped = await this.convertToBinary(warped, 50, false);
 		const kernelMorph = new Mat(ones([1, 2]) as number[][], CV_8S);
 		const morphed = await binaryWarped
-			.morphologyExAsync(kernelMorph, cv.MORPH_CLOSE)
-		cv.imwriteAsync(`./tmp/sharpened.jpg`, morphed);
+			.morphologyExAsync(kernelMorph, cv.MORPH_CLOSE);
+		cv.imwriteAsync('./tmp/sharpened.jpg', morphed);
 		const filteredContours = await this.getContours(warped, false);
 
 		const regions: Mat[] = [];
@@ -189,7 +189,7 @@ export default class PlateDetection {
 		for (const region of regions) {
 			resizedRegion.push(await this.resizeImage(region));
 		}
-		for (let [idx, detected] of regions.entries()) {
+		for (const [idx, detected] of regions.entries()) {
 			const filledImage = await this.resizeImage(detected);
 			cv.imwriteAsync(`./tmp/char-${idx}.jpg`, filledImage);
 		}

@@ -238,7 +238,7 @@ class GenericHandler {
 				}
 				return res.json({
 					apiVersion,
-				message: 'You are authenticated',
+					message: 'You are authenticated',
 					data: foundUser
 				});
 			} catch (e) {

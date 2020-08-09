@@ -16,16 +16,16 @@ class User extends Model {
 	}
 
 	static get relationMappings() {
-    return {
-      photo: {
-        relation: Model.HasOneRelation,
-        modelClass: File,
-        join: {
-          from: `${this.tableName}.photo_id`,
-          to: `${File.tableName}.id`
-        }
+		return {
+			photo: {
+				relation: Model.HasOneRelation,
+				modelClass: File,
+				join: {
+					from: `${this.tableName}.photo_id`,
+					to: `${File.tableName}.id`
+				}
 			},
-		}
+		};
 	}
 }
 

@@ -28,7 +28,7 @@ class GateHandler extends GenericHandler<typeof Gate> {
 					}
 				});
 			}
-		}
+		};
 	}
 
 	validateCode() {
@@ -64,7 +64,7 @@ class GateHandler extends GenericHandler<typeof Gate> {
 					}
 				});
 			}
-		}
+		};
 	}
 }
 
