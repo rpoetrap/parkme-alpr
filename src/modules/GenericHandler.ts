@@ -593,7 +593,7 @@ class GenericHandler<M extends typeof GenericModel> {
 					}
 				}).array('files');
 
-				return upload(req, res, async (err) => {
+				return upload(req, res, async (err: any) => {
 					let {
 						shownAttributes,
 						mutableAttributes,
