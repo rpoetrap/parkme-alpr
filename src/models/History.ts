@@ -16,41 +16,38 @@ class History extends Model {
 	}
 
 	$beforeInsert() {
-		const history = this;
-		if (history.smartcard) {
-			history.smartcard = JSON.stringify(history.smartcard);
+		if (this.smartcard) {
+			this.smartcard = JSON.stringify(this.smartcard);
 		}
-		if (history.gate) {
-			history.gate = JSON.stringify(history.gate);
+		if (this.gate) {
+			this.gate = JSON.stringify(this.gate);
 		}
-		if (history.vehicle) {
-			history.vehicle = JSON.stringify(history.vehicle);
+		if (this.vehicle) {
+			this.vehicle = JSON.stringify(this.vehicle);
 		}
 	}
 
 	$beforeUpdate() {
-		const history = this;
-		if (history.smartcard) {
-			history.smartcard = JSON.stringify(history.smartcard);
+		if (this.smartcard) {
+			this.smartcard = JSON.stringify(this.smartcard);
 		}
-		if (history.gate) {
-			history.gate = JSON.stringify(history.gate);
+		if (this.gate) {
+			this.gate = JSON.stringify(this.gate);
 		}
-		if (history.vehicle) {
-			history.vehicle = JSON.stringify(history.vehicle);
+		if (this.vehicle) {
+			this.vehicle = JSON.stringify(this.vehicle);
 		}
 	}
 
 	$afterFind() {
-		const history = this;
-		if (history.smartcard) {
-			history.smartcard = JSON.parse(history.smartcard);
+		if (this.smartcard) {
+			this.smartcard = JSON.parse(this.smartcard);
 		}
-		if (history.gate) {
-			history.gate = JSON.parse(history.gate);
+		if (this.gate) {
+			this.gate = JSON.parse(this.gate);
 		}
-		if (history.vehicle) {
-			history.vehicle = JSON.parse(history.vehicle);
+		if (this.vehicle) {
+			this.vehicle = JSON.parse(this.vehicle);
 		}
 	}
 }
