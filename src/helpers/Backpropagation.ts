@@ -160,8 +160,8 @@ export default class Backpropagation {
 	/**
    * Save weight and bias
    */
-	save() {
-		fs.writeFileSync(path.join(this.filePath, this.fileName), JSON.stringify({
+	save(filepath = path.join(this.filePath, this.fileName)) {
+		fs.writeFileSync(filepath, JSON.stringify({
 			weights: this.weights.map(item => item.toArray()),
 			bias: this.bias.map(item => item.toArray()),
 			outputs: this.outputs

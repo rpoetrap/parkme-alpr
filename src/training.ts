@@ -6,7 +6,7 @@ import { mean, sum } from 'mathjs';
 import cliProgress from 'cli-progress';
 
 import Backpropagation, { Dataset, normalizeData } from './helpers/Backpropagation';
-import { toleransiError, learningRate } from './configs/backpropagation';
+import { toleransiError, learningRate, hiddenLayer } from './configs/backpropagation';
 
 interface CharPercentage {
 	[key: string]: number;
@@ -43,7 +43,8 @@ try {
 		let error = 1;
 		let epoch = 1;
 		let lowest = 1;
-		const backpro = new Backpropagation(inputData.length, [50, 50], outputs);
+		const backpro = new Backpropagation(inputData.length, hiddenLayer, outputs);
+		backpro.save('tmp/initialState');
 
 		console.log('start');
 		while (!(error <= toleransiError)) {
@@ -61,6 +62,7 @@ try {
 			error = mean(tempError);
 			bar.stop();
 			console.log(`Epoch ${epoch}: ${error}`);
+			backpro.save(`tmp/state-${epoch}`);
 			if (error < lowest) {
 				lowest = error;
 				backpro.save();
