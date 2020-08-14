@@ -38,7 +38,7 @@ try {
 		}
 
 		const selectedData = head(trainingData)!;
-		const inputData = normalizeData(await cv.imreadAsync(selectedData.filePath));
+		const inputData = normalizeData(await cv.imreadAsync(selectedData.filePath, cv.IMREAD_GRAYSCALE));
 
 		let error = 1;
 		let epoch = 1;
@@ -53,7 +53,7 @@ try {
 			const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 			bar.start(dataset.length, 0);
 			for (const [idx, data] of dataset.entries()) {
-				const inputData = normalizeData(await cv.imreadAsync(data.filePath));
+				const inputData = normalizeData(await cv.imreadAsync(data.filePath, cv.IMREAD_GRAYSCALE));
 				error = backpro.train(inputData, data.output, learningRate);
 				tempError.push(error);
 				bar.update(idx + 1);
@@ -75,7 +75,7 @@ try {
 			console.log(`${char}\t ${correct[char] / (correct[char] + incorrect[char]) * 100}`);
 		}
 		for (const data of trainingData) {
-			const inputData = normalizeData(await cv.imreadAsync(data.filePath));
+			const inputData = normalizeData(await cv.imreadAsync(data.filePath, cv.IMREAD_GRAYSCALE));
 			const { output } = backpro.feedforward(inputData);
 			const result = (output.toArray() as number[][]).map(item => item[0]);
 
