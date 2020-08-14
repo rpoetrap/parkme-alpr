@@ -190,7 +190,7 @@ export const normalizeData = (data: Mat) => {
 	const result: number[] = [];
 	data.getDataAsArray().map(rowData => {
 		rowData.map(colData => {
-			result.push(colData);
+			result.push(colData/255);
 		});
 	});
 
