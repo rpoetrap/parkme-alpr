@@ -42,7 +42,9 @@ export default class PlateDetection {
 	async detect() {
 		try {
 			await this.localization();
-			const result = await this.segmentation();
+			if (this.foundPlate.length == 0) throw new Error('No plate detected');
+			console.log('detected');
+			const result = await this.segmentation(this.foundPlate[0]);
 			return result;
 		} catch {
 			return [];
@@ -160,11 +162,7 @@ export default class PlateDetection {
 	/**
    * Character Segmentation
    */
-	private async segmentation() {
-		if (this.foundPlate.length == 0) throw new Error('No plate detected');
-		console.log('detected');
-
-		const resultImage = this.foundPlate[0];
+	async segmentation(resultImage: Mat) {
 		const warped = await this.perspectiveTransform(resultImage);
 
 		const kernel = new Mat([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]], CV_8S);
