@@ -173,8 +173,8 @@ export default class Backpropagation {
 	/**
    * Load saved weight and bias
    */
-	load() {
-		const data = JSON.parse(fs.readFileSync(path.join(this.filePath, this.fileName), 'utf-8'));
+	load(filepath = path.join(this.filePath, this.fileName)) {
+		const data = JSON.parse(fs.readFileSync(filepath, 'utf-8'));
 		data.weights = data.weights.map((item: any) => matrix(item));
 		data.bias = data.bias.map((item: any) => matrix(item));
 
