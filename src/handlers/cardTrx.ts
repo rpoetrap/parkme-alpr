@@ -106,6 +106,8 @@ class CardTrxHandler extends GenericHandler<typeof CardTrx> {
 						}
 					});
 
+					console.log('Detected: ', vehicle_plate);
+					
 					/**
 					 * Check card and vehicle existence
 					 */
