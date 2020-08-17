@@ -6,7 +6,7 @@ import { mean, sum } from 'mathjs';
 import cliProgress from 'cli-progress';
 
 import Backpropagation, { Dataset, normalizeData } from './helpers/Backpropagation';
-import { toleransiError, learningRate } from './configs/backpropagation';
+import { toleransiError, learningRate, hiddenLayer } from './configs/backpropagation';
 
 interface CharPercentage {
 	[key: string]: number;
@@ -38,12 +38,13 @@ try {
 		}
 
 		const selectedData = head(trainingData)!;
-		const inputData = normalizeData(await cv.imreadAsync(selectedData.filePath));
+		const inputData = normalizeData(await cv.imreadAsync(selectedData.filePath, cv.IMREAD_GRAYSCALE));
 
 		let error = 1;
 		let epoch = 1;
 		let lowest = 1;
-		const backpro = new Backpropagation(inputData.length, [50, 50], outputs);
+		const backpro = new Backpropagation(inputData.length, hiddenLayer, outputs);
+		backpro.save('tmp/initialState');
 
 		console.log('start');
 		while (!(error <= toleransiError)) {
@@ -53,7 +54,7 @@ try {
 			const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 			bar.start(dataset.length, 0);
 			for (const [idx, data] of dataset.entries()) {
-				const inputData = normalizeData(await cv.imreadAsync(data.filePath));
+				const inputData = normalizeData(await cv.imreadAsync(data.filePath, cv.IMREAD_GRAYSCALE));
 				error = backpro.train(inputData, data.output, learningRate);
 				tempError.push(error);
 				bar.update(idx + 1);
@@ -61,6 +62,7 @@ try {
 			error = mean(tempError);
 			bar.stop();
 			console.log(`Epoch ${epoch}: ${error}`);
+			backpro.save(`tmp/state-${epoch}`);
 			if (error < lowest) {
 				lowest = error;
 				backpro.save();
@@ -75,7 +77,7 @@ try {
 			console.log(`${char}\t ${correct[char] / (correct[char] + incorrect[char]) * 100}`);
 		}
 		for (const data of trainingData) {
-			const inputData = normalizeData(await cv.imreadAsync(data.filePath));
+			const inputData = normalizeData(await cv.imreadAsync(data.filePath, cv.IMREAD_GRAYSCALE));
 			const { output } = backpro.feedforward(inputData);
 			const result = (output.toArray() as number[][]).map(item => item[0]);
 

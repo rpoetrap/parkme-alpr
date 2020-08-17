@@ -160,8 +160,8 @@ export default class Backpropagation {
 	/**
    * Save weight and bias
    */
-	save() {
-		fs.writeFileSync(path.join(this.filePath, this.fileName), JSON.stringify({
+	save(filepath = path.join(this.filePath, this.fileName)) {
+		fs.writeFileSync(filepath, JSON.stringify({
 			weights: this.weights.map(item => item.toArray()),
 			bias: this.bias.map(item => item.toArray()),
 			outputs: this.outputs
@@ -173,8 +173,8 @@ export default class Backpropagation {
 	/**
    * Load saved weight and bias
    */
-	load() {
-		const data = JSON.parse(fs.readFileSync(path.join(this.filePath, this.fileName), 'utf-8'));
+	load(filepath = path.join(this.filePath, this.fileName)) {
+		const data = JSON.parse(fs.readFileSync(filepath, 'utf-8'));
 		data.weights = data.weights.map((item: any) => matrix(item));
 		data.bias = data.bias.map((item: any) => matrix(item));
 
@@ -190,7 +190,7 @@ export const normalizeData = (data: Mat) => {
 	const result: number[] = [];
 	data.getDataAsArray().map(rowData => {
 		rowData.map(colData => {
-			result.push(colData);
+			result.push(colData/255);
 		});
 	});
 

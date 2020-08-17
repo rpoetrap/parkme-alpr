@@ -14,6 +14,42 @@ class History extends Model {
 	static get tableName() {
 		return 'histories';
 	}
+
+	$beforeInsert() {
+		if (this.smartcard) {
+			this.smartcard = JSON.stringify(this.smartcard);
+		}
+		if (this.gate) {
+			this.gate = JSON.stringify(this.gate);
+		}
+		if (this.vehicle) {
+			this.vehicle = JSON.stringify(this.vehicle);
+		}
+	}
+
+	$beforeUpdate() {
+		if (this.smartcard) {
+			this.smartcard = JSON.stringify(this.smartcard);
+		}
+		if (this.gate) {
+			this.gate = JSON.stringify(this.gate);
+		}
+		if (this.vehicle) {
+			this.vehicle = JSON.stringify(this.vehicle);
+		}
+	}
+
+	$afterFind() {
+		if (this.smartcard) {
+			this.smartcard = JSON.parse(this.smartcard);
+		}
+		if (this.gate) {
+			this.gate = JSON.parse(this.gate);
+		}
+		if (this.vehicle) {
+			this.vehicle = JSON.parse(this.vehicle);
+		}
+	}
 }
 
 export default History;

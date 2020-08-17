@@ -42,9 +42,12 @@ export default class PlateDetection {
 	async detect() {
 		try {
 			await this.localization();
-			const result = await this.segmentation();
+			if (this.foundPlate.length == 0) throw new Error('No plate detected');
+			console.log('detected');
+			const result = await this.segmentation(this.foundPlate[0]);
 			return result;
-		} catch {
+		} catch (e) {
+			console.log(`PlateDetection: ${e.message}`);
 			return [];
 		}
 	}
@@ -109,11 +112,12 @@ export default class PlateDetection {
 		const contours = await binary.copy().findContoursAsync(RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 		const meanHeight = mean(contours.map(contour => contour.boundingRect().height)) / image.rows;
 
-		const filteredContours = !filter ? contours : contours
+		const filteredContours = contours
 			.filter(contour => {
 				const { width, height } = contour.boundingRect();
 				const ratio = height / width;
-				return (ratio > 1 && ratio <= 3.5 && (height / image.rows) >= meanHeight);
+				const filterByHeight = filter ? (height / image.rows) >= meanHeight : true;
+				return (ratio >= 1.7 && ratio <= 3 && filterByHeight);
 			});
 
 		return filteredContours.sort((a, b) => a.boundingRect().x - b.boundingRect().x);
@@ -160,11 +164,7 @@ export default class PlateDetection {
 	/**
    * Character Segmentation
    */
-	private async segmentation() {
-		if (this.foundPlate.length == 0) throw new Error('No plate detected');
-		console.log('detected');
-
-		const resultImage = this.foundPlate[0];
+	async segmentation(resultImage: Mat) {
 		const warped = await this.perspectiveTransform(resultImage);
 
 		const kernel = new Mat([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]], CV_8S);
@@ -178,12 +178,13 @@ export default class PlateDetection {
 		const filteredContours = await this.getContours(warped, false);
 
 		const regions: Mat[] = [];
-		for (const contour of filteredContours) {
+		for (const [idx, contour] of Object.entries(filteredContours)) {
 			const { width, height, x, y } = contour.boundingRect();
 			regions.push(morphed.getRegion(contour.boundingRect()));
 			// Draw bounding box
 			sharpened.drawRectangle(new Point2(x, y), new Point2(x + width, y + height), new Vec3(0, 0, 255), 1);
 		}
+		cv.imwriteAsync('./tmp/sharpenedRect.jpg', sharpened);
 
 		const resizedRegion: Mat[] = [];
 		for (const region of regions) {
