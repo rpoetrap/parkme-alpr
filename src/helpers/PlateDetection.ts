@@ -169,11 +169,13 @@ export default class PlateDetection {
 
 		const kernel = new Mat([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]], CV_8S);
 		const sharpened = await warped.filter2DAsync(-1, kernel);
+		cv.imwriteAsync('./tmp/tajam.jpg', sharpened);
 
 		const binaryWarped = await this.convertToBinary(warped, 50, false);
-		const kernelMorph = new Mat(ones([1, 2]) as number[][], CV_8S);
+		const contourImage = binaryWarped.copy().cvtColor(cv.COLOR_GRAY2BGR)
+		const kernelMorph = new Mat(ones([2, 1]) as number[][], CV_8S);
 		const morphed = await binaryWarped
-			.morphologyExAsync(kernelMorph, cv.MORPH_CLOSE);
+			.morphologyExAsync(kernelMorph, cv.MORPH_ERODE);
 		cv.imwriteAsync('./tmp/sharpened.jpg', morphed);
 		const filteredContours = await this.getContours(warped, false);
 
@@ -182,9 +184,9 @@ export default class PlateDetection {
 			const { width, height, x, y } = contour.boundingRect();
 			regions.push(morphed.getRegion(contour.boundingRect()));
 			// Draw bounding box
-			sharpened.drawRectangle(new Point2(x, y), new Point2(x + width, y + height), new Vec3(0, 0, 255), 1);
+			contourImage.drawRectangle(new Point2(x, y), new Point2(x + width, y + height), new Vec3(0, 0, 255), 1);
 		}
-		cv.imwriteAsync('./tmp/sharpenedRect.jpg', sharpened);
+		cv.imwriteAsync('./tmp/sharpenedRect.jpg', contourImage);
 
 		const resizedRegion: Mat[] = [];
 		for (const region of regions) {
