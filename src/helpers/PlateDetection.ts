@@ -172,7 +172,7 @@ export default class PlateDetection {
 		cv.imwriteAsync('./tmp/tajam.jpg', sharpened);
 
 		const binaryWarped = await this.convertToBinary(warped, 50);
-		const kernelMorph = new Mat(ones([2, 1]) as number[][], CV_8S);
+		const kernelMorph = new Mat(ones([1, 2]) as number[][], CV_8S);
 		const morphed = await binaryWarped
 			.morphologyExAsync(kernelMorph, cv.MORPH_ERODE);
 		const contourImage = morphed.copy().cvtColor(cv.COLOR_GRAY2BGR);
