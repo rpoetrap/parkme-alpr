@@ -14,17 +14,17 @@ interface GenericConfig {
 	shownAttributes?: string[];
 }
 
-interface FetchingConfig extends GenericConfig {
+export interface FetchingConfig extends GenericConfig {
 	populateAttributes?: string[];
 }
 
-interface MutatingConfig extends GenericConfig {
+export interface MutatingConfig extends GenericConfig {
 	mutableAttributes?: string[];
 	uniqueAttributes?: string[];
 	requiredAttributes?: string[];
 }
 
-interface PostUploadConfig extends MutatingConfig {
+export interface PostUploadConfig extends MutatingConfig {
 	maxFile?: number;
 	maxSize?: number;
 	mimetype?: string[];
@@ -49,7 +49,7 @@ class GenericModel extends Model {
 class GenericHandler<M extends typeof GenericModel> {
 	protected model: M;
 	protected idParam: string;
-	private config: HandlerConfig;
+	protected config: HandlerConfig;
 	protected isFile: boolean;
 
 	constructor(config: HandlerConfig, model: M, idParam: string, isFile = false) {
