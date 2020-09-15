@@ -14,17 +14,17 @@ interface GenericConfig {
 	shownAttributes?: string[];
 }
 
-interface FetchingConfig extends GenericConfig {
+export interface FetchingConfig extends GenericConfig {
 	populateAttributes?: string[];
 }
 
-interface MutatingConfig extends GenericConfig {
+export interface MutatingConfig extends GenericConfig {
 	mutableAttributes?: string[];
 	uniqueAttributes?: string[];
 	requiredAttributes?: string[];
 }
 
-interface PostUploadConfig extends MutatingConfig {
+export interface PostUploadConfig extends MutatingConfig {
 	maxFile?: number;
 	maxSize?: number;
 	mimetype?: string[];
@@ -49,7 +49,7 @@ class GenericModel extends Model {
 class GenericHandler<M extends typeof GenericModel> {
 	protected model: M;
 	protected idParam: string;
-	private config: HandlerConfig;
+	protected config: HandlerConfig;
 	protected isFile: boolean;
 
 	constructor(config: HandlerConfig, model: M, idParam: string, isFile = false) {
@@ -68,7 +68,8 @@ class GenericHandler<M extends typeof GenericModel> {
 				const filterByUser = config.filterByUser || false;
 				const populateAttributes = config.populateAttributes || [];
 
-				const columnInfo = Object.keys(await this.model.query().columnInfo());
+				const rawColumnInfo = await this.model.query().columnInfo();
+				const columnInfo = Object.keys(rawColumnInfo);
 				const userData: any = req.user;
 
 				let query = this.model.query();
@@ -113,7 +114,16 @@ class GenericHandler<M extends typeof GenericModel> {
 						builder.orWhere(builder => {
 							for (const andString of andFilter) {
 								const { key, operator, value } = splitOperator(<string>andString);
-								builder = key.split('.') ? builder.where(key, operator, value) : builder.where(this.model.ref(key), operator, value);
+								if (key.split('.').length === 1) {
+									builder = builder.where(this.model.ref(key), operator, value);
+								} else {
+									const splittedKey = key.split('.');
+									if (rawColumnInfo[splittedKey[0]]?.type === 'json') {
+										builder = builder.whereRaw(`JSON_EXTRACT(${splittedKey[0]}, "$.${splittedKey.slice(1).join('.')}") ${operator} ${value}`);
+									} else {
+										builder = builder.where(key, operator, value);
+									}
+								}
 							}
 						});
 					}

@@ -112,11 +112,11 @@ export default class PlateDetection {
 		const contours = await binary.copy().findContoursAsync(RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 		const meanHeight = mean(contours.map(contour => contour.boundingRect().height)) / image.rows;
 
-		const filteredContours = contours
+		const filteredContours = !filter ? contours : contours
 			.filter(contour => {
 				const { width, height } = contour.boundingRect();
 				const ratio = height / width;
-				const filterByHeight = filter ? (height / image.rows) >= meanHeight : true;
+				const filterByHeight = (height / image.rows) >= meanHeight*0.8;
 				return (ratio >= 1.7 && ratio <= 3 && filterByHeight);
 			});
 
@@ -169,22 +169,25 @@ export default class PlateDetection {
 
 		const kernel = new Mat([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]], CV_8S);
 		const sharpened = await warped.filter2DAsync(-1, kernel);
+		cv.imwriteAsync('./tmp/tajam.jpg', sharpened);
 
-		const binaryWarped = await this.convertToBinary(warped, 50, false);
+		const binaryWarped = await this.convertToBinary(warped, 50);
 		const kernelMorph = new Mat(ones([1, 2]) as number[][], CV_8S);
 		const morphed = await binaryWarped
-			.morphologyExAsync(kernelMorph, cv.MORPH_CLOSE);
-		cv.imwriteAsync('./tmp/sharpened.jpg', morphed);
-		const filteredContours = await this.getContours(warped, false);
+			.morphologyExAsync(kernelMorph, cv.MORPH_ERODE);
+		const contourImage = morphed.copy().cvtColor(cv.COLOR_GRAY2BGR);
+		cv.imwriteAsync('./tmp/sharpened.jpg', binaryWarped);
+		cv.imwriteAsync('./tmp/morphed.jpg', morphed);
+		const filteredContours = await this.getContours(warped);
 
 		const regions: Mat[] = [];
 		for (const [idx, contour] of Object.entries(filteredContours)) {
 			const { width, height, x, y } = contour.boundingRect();
 			regions.push(morphed.getRegion(contour.boundingRect()));
 			// Draw bounding box
-			sharpened.drawRectangle(new Point2(x, y), new Point2(x + width, y + height), new Vec3(0, 0, 255), 1);
+			contourImage.drawRectangle(new Point2(x, y), new Point2(x + width, y + height), new Vec3(0, 0, 255), 1);
 		}
-		cv.imwriteAsync('./tmp/sharpenedRect.jpg', sharpened);
+		cv.imwriteAsync('./tmp/sharpenedRect.jpg', contourImage);
 
 		const resizedRegion: Mat[] = [];
 		for (const region of regions) {

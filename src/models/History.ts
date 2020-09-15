@@ -25,6 +25,9 @@ class History extends Model {
 		if (this.vehicle) {
 			this.vehicle = JSON.stringify(this.vehicle);
 		}
+		if (this.created_by) {
+			this.created_by = JSON.stringify(this.created_by);
+		}
 	}
 
 	$beforeUpdate() {
@@ -37,6 +40,9 @@ class History extends Model {
 		if (this.vehicle) {
 			this.vehicle = JSON.stringify(this.vehicle);
 		}
+		if (this.created_by) {
+			this.created_by = JSON.stringify(this.created_by);
+		}
 	}
 
 	$afterFind() {
@@ -48,6 +54,9 @@ class History extends Model {
 		}
 		if (this.vehicle) {
 			this.vehicle = JSON.parse(this.vehicle);
+		}
+		if (this.created_by) {
+			this.created_by = JSON.parse(this.created_by);
 		}
 	}
 }
